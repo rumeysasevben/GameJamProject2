@@ -1,0 +1,74 @@
+# ---------------------------------------------------------
+# Unity .gitignore
+# Projenin KÖK klasörüne koy (Assets/ ve ProjectSettings/ ile aynı seviye)
+# ---------------------------------------------------------
+
+# Unity tarafından üretilen klasörler (asla commit'lenmez)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Asset Store araçları (istersen aç)
+# /[Aa]ssets/AssetStoreTools*
+
+# Rider / Visual Studio / VS Code
+/[Aa]ssets/Plugins/Editor/JetBrains*
+.vs/
+.vscode/
+.idea/
+.gradle/
+
+# Otomatik üretilen solution/project dosyaları
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity'nin ürettiği meta dosyaları (yukarıdakiler için)
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Crash report
+sysinfo.txt
+
+# Build çıktıları
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.ipa
+
+# Crashlytics
+crashlytics-build.properties
+
+# Addressables build çıktısı
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/[Ss]erver[Dd]ata/
+
+# Android StreamingAssets geçici dosyaları
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# İşletim sistemi çöpleri
+.DS_Store
+Thumbs.db
+desktop.ini

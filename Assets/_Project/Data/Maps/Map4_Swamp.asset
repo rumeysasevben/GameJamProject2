@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407c00e5428ed45429d609c1faa88886, type: 3}
+  m_Name: Map4_Swamp
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.MapData
+  displayName: Dead Swamp
+  background: {fileID: 21300000, guid: 501f945694b43b045974dcca12954189, type: 3}
+  padSprite: {fileID: 21300000, guid: cd77819fa4462064fa535b7340f4ac47, type: 3}
+  filler: {fileID: 21300000, guid: 834b28b268ba45741a3214160140e6fc, type: 3}
+  cameraColor: {r: 0.08, g: 0.1, b: 0.05, a: 1}
+  route:
+  - {x: 30, y: 1150}
+  - {x: 60, y: 900}
+  - {x: 140, y: 720}
+  - {x: 300, y: 640}
+  - {x: 1100, y: 640}
+  - {x: 1250, y: 625}
+  - {x: 1480, y: 640}
+  - {x: 1600, y: 700}
+  - {x: 1630, y: 850}
+  - {x: 1630, y: 1000}
+  paintedSpots:
+  - {x: 800, y: 460}
+  - {x: 360, y: 770}
+  - {x: 940, y: 770}
+  - {x: 1420, y: 770}
+  extraSpots:
+  - {x: 650, y: 780}
+  - {x: 1440, y: 470}
+  - {x: 470, y: 520}
+  props: []
+  generated: 0
+  tiles:
+    horizontal: {fileID: 0}
+    vertical: {fileID: 0}
+    bottomRight: {fileID: 0}
+    leftBottom: {fileID: 0}
+    topRight: {fileID: 0}
+    topLeft: {fileID: 0}
+    riverVertical: {fileID: 0}
+    bridge: {fileID: 0}
+    decor: []

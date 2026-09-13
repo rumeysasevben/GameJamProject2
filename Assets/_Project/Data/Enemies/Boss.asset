@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48d3ecc9ce3797c47a9211bd3595ef50, type: 3}
+  m_Name: Boss
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.EnemyData
+  displayName: Orc Warlord
+  hpMultiplier: 11
+  speedMultiplier: 0.55
+  rewardMultiplier: 1
+  armor: 0
+  killBonusTime: 25
+  canSprint: 0
+  sprintHpThreshold: 0.3
+  sprintSpeedBonus: 0.4
+  sprintDuration: 2
+  auraRadius: 0
+  auraShieldPercent: 0.25
+  sprite: {fileID: 21300000, guid: b8572e3cf08cabe4dba011e394241fe6, type: 3}
+  variants:
+  - walk:
+    - {fileID: 21300000, guid: b8572e3cf08cabe4dba011e394241fe6, type: 3}
+    - {fileID: 21300000, guid: 6ef6342aa1252ae478edf00806c34f04, type: 3}
+    - {fileID: 21300000, guid: 9c93a9039ed0f6043a8ea322200f8ddc, type: 3}
+    - {fileID: 21300000, guid: 4e9e94a196dca2f4a89140891bc0aa86, type: 3}
+    - {fileID: 21300000, guid: 785f363270bc41f43ac0a9bffe994ba6, type: 3}
+    - {fileID: 21300000, guid: db86bd4d21a685f44a8491db93af48ee, type: 3}
+    - {fileID: 21300000, guid: 1ef13c9de6a47a74bb37259a27d21f45, type: 3}
+    - {fileID: 21300000, guid: 56755a4b4b3fe5140a1cca09d12c60bb, type: 3}
+    - {fileID: 21300000, guid: cc1886b37bf03fc4a8cab7232d387336, type: 3}
+    - {fileID: 21300000, guid: 3e92b91e9fcf23546949283319315655, type: 3}
+    run:
+    - {fileID: 21300000, guid: 3eb64257beb26bc4ab823631a1a84f0e, type: 3}
+    - {fileID: 21300000, guid: fe1201a0d6e08a84b911485f2093fd6e, type: 3}
+    - {fileID: 21300000, guid: 4f5aae15e3a08e242b2fb2de34543073, type: 3}
+    - {fileID: 21300000, guid: 6ca2bf803667ecb41b92dd1f31682ce5, type: 3}
+    - {fileID: 21300000, guid: 437cf8e7de559c444b79134b738c92dd, type: 3}
+    - {fileID: 21300000, guid: b91756f1a4dcc32479455790ad44428a, type: 3}
+    - {fileID: 21300000, guid: cefd25545f3b3ae459c764782036c293, type: 3}
+    - {fileID: 21300000, guid: aaf456bf7a6563746aa6d1ca4a9cfec7, type: 3}
+    - {fileID: 21300000, guid: ef1951ba2a31d5545bdab502afdd5f6b, type: 3}
+    - {fileID: 21300000, guid: ed500659b0f259c468bb99d635f832c8, type: 3}
+    hurt:
+    - {fileID: 21300000, guid: 15f172a0dbdccde4fbb94e642baa0860, type: 3}
+    - {fileID: 21300000, guid: 3ab788c644cd83346bebbd11cbdf448d, type: 3}
+    - {fileID: 21300000, guid: a25023e8c4f0a984ba7d4c0011b58dfc, type: 3}
+    - {fileID: 21300000, guid: 1e0f9d78ecf61b241abdd3a7c3840a2b, type: 3}
+    - {fileID: 21300000, guid: 4bb8bdb8adeb3d24abbfcfc18865c09e, type: 3}
+    - {fileID: 21300000, guid: e0fe608f4bef2e04e8a1e3a1746567c8, type: 3}
+    - {fileID: 21300000, guid: 8473733b946fcfa4e95f499289c5f4b0, type: 3}
+    - {fileID: 21300000, guid: 0989800812b6ccd4db71afd18d1a98ef, type: 3}
+    - {fileID: 21300000, guid: 8347f12bab2652a419c02c21fb2b8b37, type: 3}
+    - {fileID: 21300000, guid: 5546f9173bfc0bd4e990e757b507c289, type: 3}
+    die:
+    - {fileID: 21300000, guid: ea6ab95522ab3cf42a1795f6bd455ed1, type: 3}
+    - {fileID: 21300000, guid: c8a068de309e4cc4581b5fd2e7722344, type: 3}
+    - {fileID: 21300000, guid: 5e4a3a967f666554db249bef24a2b5e8, type: 3}
+    - {fileID: 21300000, guid: f0db5a12253eca347b803d804655ae1f, type: 3}
+    - {fileID: 21300000, guid: 1c005b291bda3af4298f0e6d4d8f7c9b, type: 3}
+    - {fileID: 21300000, guid: 1c9d6d151694433409673de39a4ad916, type: 3}
+    - {fileID: 21300000, guid: ee8205b377ff93a4eb44e55ec825ca0e, type: 3}
+    - {fileID: 21300000, guid: bd9670b90efa8e74092f949f1cbc9f73, type: 3}
+    - {fileID: 21300000, guid: 9dac98756dcda294bb18bf827ef7b7d2, type: 3}
+    - {fileID: 21300000, guid: 95b66f95a65934e4aacced469711bece, type: 3}
+    idle:
+    - {fileID: 21300000, guid: 572532cb110f6e147a9cde9cdd939ee1, type: 3}
+    - {fileID: 21300000, guid: 80cd377fc0f8f974a81d8d0915d1deb4, type: 3}
+    - {fileID: 21300000, guid: 30681a7a9c4d03446bf403e3d740d303, type: 3}
+    - {fileID: 21300000, guid: 03206e63d799c5a48a77825bb5702188, type: 3}
+    - {fileID: 21300000, guid: 7cdaff3e7f4f7024ba70b8770bd1a36d, type: 3}
+    - {fileID: 21300000, guid: d568c6e1ed414e943b29615c04a6ce4a, type: 3}
+    - {fileID: 21300000, guid: aeb2ce4c8fe2ff7489be5d0484f94b47, type: 3}
+    - {fileID: 21300000, guid: 7855684cead2b3a49a5026ed010c964c, type: 3}
+    - {fileID: 21300000, guid: ad22772709096b240a008afaa21acba1, type: 3}
+    - {fileID: 21300000, guid: caa09ff3d5d59d843b9d3468f61ddb07, type: 3}
+    attack:
+    - {fileID: 21300000, guid: cd33122e6f718a347943465c61ce597c, type: 3}
+    - {fileID: 21300000, guid: 54d88eaa1cee7dc48a66ab763529f2b7, type: 3}
+    - {fileID: 21300000, guid: 8116adf6f93a0d745990eb58b1fab0c9, type: 3}
+    - {fileID: 21300000, guid: 5a225a4ff3ec72f4caa64f80fa38641f, type: 3}
+    - {fileID: 21300000, guid: e40b20b5de360b4469b67bc3c3c34439, type: 3}
+    - {fileID: 21300000, guid: 5e5ea7b82f11d3d4d9313d8998dcb71e, type: 3}
+    - {fileID: 21300000, guid: d5b46eca61aeff447917343d0d504662, type: 3}
+    - {fileID: 21300000, guid: 99f60ae6707dcf14cb7aa406d0fb60ca, type: 3}
+    - {fileID: 21300000, guid: 217577f27067ea5488777be155faade8, type: 3}
+    - {fileID: 21300000, guid: 9bf7c3a71a56c2a45895dda347c82b14, type: 3}
+    jump:
+    - {fileID: 21300000, guid: 6da7ee2c3b416724a805ef7f9011032b, type: 3}
+    - {fileID: 21300000, guid: 3eddcce9d457ca340844132f8965b3df, type: 3}
+    - {fileID: 21300000, guid: 4289f0c1f182d164f9f9f864604b3247, type: 3}
+    - {fileID: 21300000, guid: 51a0f287236d69e47a699f6a7dfb1742, type: 3}
+    - {fileID: 21300000, guid: 6760e7ff1e0800241b28c54f651f9f7b, type: 3}
+    - {fileID: 21300000, guid: 86c38f0ef4f85634daea40a6ca032cad, type: 3}
+    - {fileID: 21300000, guid: 2a009e281048a454090b0df8f7a44c51, type: 3}
+    - {fileID: 21300000, guid: 584b36788f56de347a788fb1b7f7e457, type: 3}
+    - {fileID: 21300000, guid: 856692bd3edf3af44b8bc5c50dd42adb, type: 3}
+    - {fileID: 21300000, guid: af56d5bdbfdfcc348bfc07ec46438f7e, type: 3}
+  framesPerSecond: 16
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  size: 2
+  isBoss: 1

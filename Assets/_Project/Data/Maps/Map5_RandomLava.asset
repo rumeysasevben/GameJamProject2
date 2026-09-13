@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407c00e5428ed45429d609c1faa88886, type: 3}
+  m_Name: Map5_RandomLava
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.MapData
+  displayName: Random Lava Fields
+  background: {fileID: 21300000, guid: fa6ef1c69a3f94046affc2595ee7f0d7, type: 3}
+  padSprite: {fileID: 21300000, guid: a30b5fa826dd7844683fcbca40fc442f, type: 3}
+  filler: {fileID: 21300000, guid: 2dff2d27bb852d04591deccb3174709d, type: 3}
+  cameraColor: {r: 0.13, g: 0.08, b: 0.06, a: 1}
+  route: []
+  paintedSpots: []
+  extraSpots: []
+  props: []
+  generated: 1
+  tiles:
+    horizontal: {fileID: 21300000, guid: c52c4d5116820424592516b9edd59832, type: 3}
+    vertical: {fileID: 21300000, guid: d3647f68f719a50468c3ee9103096b9f, type: 3}
+    bottomRight: {fileID: 21300000, guid: b20da9c509d28fa48985fb6be053caae, type: 3}
+    leftBottom: {fileID: 21300000, guid: 3c2358ea3bb573d4b83846df68447ab6, type: 3}
+    topRight: {fileID: 21300000, guid: 0bd1b42a811859f4c9221c5ea87943d8, type: 3}
+    topLeft: {fileID: 21300000, guid: 61265d072fd773c4f8db8f7f3440e857, type: 3}
+    riverVertical: {fileID: 21300000, guid: b3331532c0000cb498fa67260ce232a3, type: 3}
+    bridge: {fileID: 21300000, guid: c899645ffe326b7419c926911c2c2fdd, type: 3}
+    decor:
+    - {fileID: 21300000, guid: 9412bf48a3217744c9d32447177a1167, type: 3}
+    - {fileID: 21300000, guid: 73f42551fff089e4daaa6312a74f31e9, type: 3}
+    - {fileID: 21300000, guid: 68d6c85ef13d7094aa6f59864c8be788, type: 3}
+    - {fileID: 21300000, guid: 3a27009f39e9c9f48940fa6a206dd9dc, type: 3}
+    - {fileID: 21300000, guid: 55f38170ed77e2d42a446e3306a8115d, type: 3}
+    - {fileID: 21300000, guid: a129b7b6b26c8bf4982a135c62aca080, type: 3}
+    - {fileID: 21300000, guid: 59ecd57050828c6408544deb23323d85, type: 3}
+    - {fileID: 21300000, guid: 4ee2e2402a0f6fc4093daf6146893108, type: 3}
+    - {fileID: 21300000, guid: 49f7bf6de2d79924daa20ea5effa1429, type: 3}
+    - {fileID: 21300000, guid: 2157db58e80f1d04d989dfefca8d6602, type: 3}
+    - {fileID: 21300000, guid: 69d647bb75246b345910e02159d5cdaf, type: 3}
+    - {fileID: 21300000, guid: 016ada8b2340ab949bdf4ef776206a48, type: 3}
+    - {fileID: 21300000, guid: 82e36eb7fb1193840b1937de9de6d846, type: 3}

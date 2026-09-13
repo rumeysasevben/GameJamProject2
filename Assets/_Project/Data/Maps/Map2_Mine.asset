@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407c00e5428ed45429d609c1faa88886, type: 3}
+  m_Name: Map2_Mine
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.MapData
+  displayName: Crystal Mine
+  background: {fileID: 21300000, guid: ed030ae4766eaae4895c7358f8ceea12, type: 3}
+  padSprite: {fileID: 21300000, guid: b33304edd8683444aaf8cb2a2387efe0, type: 3}
+  filler: {fileID: 21300000, guid: 06871bd7c48870d4d8bb5df1b5c77d6d, type: 3}
+  cameraColor: {r: 0.12, g: 0.07, b: 0.04, a: 1}
+  route:
+  - {x: -60, y: 370}
+  - {x: 90, y: 420}
+  - {x: 150, y: 560}
+  - {x: 250, y: 690}
+  - {x: 500, y: 715}
+  - {x: 1000, y: 715}
+  - {x: 1250, y: 745}
+  - {x: 1345, y: 840}
+  - {x: 1370, y: 1005}
+  paintedSpots:
+  - {x: 345, y: 580}
+  - {x: 325, y: 860}
+  - {x: 810, y: 860}
+  - {x: 1160, y: 860}
+  - {x: 1225, y: 540}
+  - {x: 1155, y: 210}
+  extraSpots:
+  - {x: 1560, y: 740}
+  props: []
+  generated: 0
+  tiles:
+    horizontal: {fileID: 0}
+    vertical: {fileID: 0}
+    bottomRight: {fileID: 0}
+    leftBottom: {fileID: 0}
+    topRight: {fileID: 0}
+    topLeft: {fileID: 0}
+    riverVertical: {fileID: 0}
+    bridge: {fileID: 0}
+    decor: []

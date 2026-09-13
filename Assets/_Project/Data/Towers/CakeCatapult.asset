@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c9ebf879cb8f564a8733c959b594b40, type: 3}
+  m_Name: CakeCatapult
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.TowerData
+  displayName: Catapult
+  kind: 2
+  description: You lob rocks that splash a small group.
+  baseCost: 40
+  damage: 15
+  fireRate: 0.8
+  range: 3.2
+  splashRadius: 1.3
+  burnDps: 0
+  burnDuration: 2
+  slowPercent: 0
+  slowDuration: 1.5
+  projectileSprite: {fileID: 21300000, guid: ec10bc401a0ff4040ba807bf2d312e90, type: 3}
+  projectileColor: {r: 1, g: 1, b: 1, a: 1}
+  projectileSize: 0.75
+  projectileSpeed: 6
+  lobbed: 1
+  projectileSpins: 0
+  levelProjectiles:
+  - sprite: {fileID: 21300000, guid: ec10bc401a0ff4040ba807bf2d312e90, type: 3}
+    size: 0.45
+    spin: 1
+    faceTravel: 0
+  - sprite: {fileID: 21300000, guid: a6c13b987bb570743a67e25963e7a6a4, type: 3}
+    size: 0.6
+    spin: 1
+    faceTravel: 0
+  - sprite: {fileID: 21300000, guid: a6c13b987bb570743a67e25963e7a6a4, type: 3}
+    size: 0.75
+    spin: 1
+    faceTravel: 0
+  impactFrames:
+  - {fileID: 21300000, guid: 9b2199c52d7462846b2a0dfd8890962b, type: 3}
+  - {fileID: 21300000, guid: a50930110d7c38d4cbd502991b5a66f4, type: 3}
+  - {fileID: 21300000, guid: b6d62d7f0b20a064fab1f6d3c27aecb8, type: 3}
+  - {fileID: 21300000, guid: d3dd2196945774c4b9365aa9787863af, type: 3}
+  - {fileID: 21300000, guid: afbb555b074d0fa4cbe3b08ce9fca567, type: 3}
+  impactSecondaryFrames:
+  - {fileID: 21300000, guid: 398254db9a2f26f4caf53ced96053fe2, type: 3}
+  - {fileID: 21300000, guid: 011290435951e3845869e8f820c56598, type: 3}
+  - {fileID: 21300000, guid: 518d5f3511741dd41bdaee683daeb447, type: 3}
+  - {fileID: 21300000, guid: 81c1c3e8131773a4289a73a70f866221, type: 3}
+  impactScale: 0.9
+  icon: {fileID: 21300000, guid: a2a0cfff8510c924184bb6ef8672a1fd, type: 3}
+  levelSprites:
+  - {fileID: 21300000, guid: a2a0cfff8510c924184bb6ef8672a1fd, type: 3}
+  - {fileID: 21300000, guid: e49187a552b1d374db757f81566f6573, type: 3}
+  - {fileID: 21300000, guid: 1c5c316083baa0a4bb1b35efcbbe30dd, type: 3}
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  size: 1.15

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c42cec4a46b8434409bae3f83c7d61b8, type: 3}
+  m_Name: SoundBank
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.SoundBank
+  musicLayers: []
+  crowdAmbient: {fileID: 0}
+  towerFire:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  build: {fileID: 0}
+  upgrade: {fileID: 0}
+  buildFailed: {fileID: 0}
+  enemyHit: {fileID: 0}
+  enemyPop: {fileID: 0}
+  splash: {fileID: 0}
+  bossDown: {fileID: 0}
+  candlePuff: {fileID: 0}
+  crowdOhh: {fileID: 0}
+  candleRelight: {fileID: 0}
+  newCandle: {fileID: 0}
+  waveStart: {fileID: 0}
+  waveCleared: {fileID: 0}
+  levelUp: {fileID: 0}
+  cardPicked: {fileID: 0}
+  uiClick: {fileID: 0}
+  victory: {fileID: 0}
+  defeat: {fileID: 0}

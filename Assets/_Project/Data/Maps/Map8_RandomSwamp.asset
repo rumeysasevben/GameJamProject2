@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407c00e5428ed45429d609c1faa88886, type: 3}
+  m_Name: Map8_RandomSwamp
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.MapData
+  displayName: Random Dead Swamp
+  background: {fileID: 21300000, guid: 2ba8aaf064f4c1147aeb94d45d3f5d79, type: 3}
+  padSprite: {fileID: 21300000, guid: 1e0044cf0d999dc408cdf3c6bff60aca, type: 3}
+  filler: {fileID: 21300000, guid: 834b28b268ba45741a3214160140e6fc, type: 3}
+  cameraColor: {r: 0.08, g: 0.1, b: 0.05, a: 1}
+  route: []
+  paintedSpots: []
+  extraSpots: []
+  props: []
+  generated: 1
+  tiles:
+    horizontal: {fileID: 21300000, guid: ab2f5d864e6052e4fbcb1e3256821a31, type: 3}
+    vertical: {fileID: 21300000, guid: ca9786e7f810d6147abc6a3812a39ea5, type: 3}
+    bottomRight: {fileID: 21300000, guid: 6458879f1ae3ae04091488d1959e6585, type: 3}
+    leftBottom: {fileID: 21300000, guid: ebc98425e29655449a2221bf0cf7d6b6, type: 3}
+    topRight: {fileID: 21300000, guid: b369c6613afcf5d41a4f63a989ee4b1c, type: 3}
+    topLeft: {fileID: 21300000, guid: 08643959750d744419ca4002e3eb0b8c, type: 3}
+    riverVertical: {fileID: 21300000, guid: f6de3ad64a8c36447b5bfbd9c4f8e815, type: 3}
+    bridge: {fileID: 21300000, guid: 98fda0ec6d805bb46bdde3bbec1a8483, type: 3}
+    decor:
+    - {fileID: 21300000, guid: ccc2f52f5e07263498d817cb7c2d95a4, type: 3}
+    - {fileID: 21300000, guid: 908734380deae6f45a068e7f1ce3a58c, type: 3}
+    - {fileID: 21300000, guid: 8b028929ce9176742ab1c3f6bce59668, type: 3}
+    - {fileID: 21300000, guid: be284939d081a1f4b90d78664f87ea68, type: 3}
+    - {fileID: 21300000, guid: 6465892a5dc8c7b47a847c183a1db514, type: 3}
+    - {fileID: 21300000, guid: 204fe8b590bed9246ae91d615734dfc6, type: 3}
+    - {fileID: 21300000, guid: 5b2ec023a279dc249ad026db52e5ad5a, type: 3}
+    - {fileID: 21300000, guid: 9069f58a4afdbb846800f02319e0dcfa, type: 3}
+    - {fileID: 21300000, guid: 23ddce2d0e620984fa9d3943ea8cf296, type: 3}
+    - {fileID: 21300000, guid: 147585f2e0b3cf2468a0552d2eaaaa26, type: 3}
+    - {fileID: 21300000, guid: 2a328087c7bcc1540a084aaf2876921a, type: 3}
+    - {fileID: 21300000, guid: b2dff30242db5d444a23678cb5afb5ba, type: 3}
+    - {fileID: 21300000, guid: 5d67a2490619ef84eb01182dcfb83046, type: 3}
+    - {fileID: 21300000, guid: 5a8df1e44c1c5a547a5ed09cd9422656, type: 3}
+    - {fileID: 21300000, guid: 51fce233c0feae347a8bac006dcfc0d3, type: 3}
+    - {fileID: 21300000, guid: 1fdb8ed617fb156408a1b1426745bf4d, type: 3}

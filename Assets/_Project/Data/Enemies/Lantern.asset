@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48d3ecc9ce3797c47a9211bd3595ef50, type: 3}
+  m_Name: Lantern
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.EnemyData
+  displayName: Shield Bearer
+  hpMultiplier: 1.2
+  speedMultiplier: 0.9
+  rewardMultiplier: 1
+  armor: 0
+  killBonusTime: 0
+  canSprint: 0
+  sprintHpThreshold: 0.3
+  sprintSpeedBonus: 0.4
+  sprintDuration: 2
+  auraRadius: 2
+  auraShieldPercent: 0.2
+  sprite: {fileID: 21300000, guid: fc9b6b476568e4143bedc4a4c33c7bee, type: 3}
+  variants:
+  - walk:
+    - {fileID: 21300000, guid: fc9b6b476568e4143bedc4a4c33c7bee, type: 3}
+    - {fileID: 21300000, guid: e441b2dfed58930428537a5c74a198fb, type: 3}
+    - {fileID: 21300000, guid: 0b588e761a623dc45b2439ab2ad33a71, type: 3}
+    - {fileID: 21300000, guid: 8c13799c3d4ab964ea85896a32adb770, type: 3}
+    - {fileID: 21300000, guid: 6a06a9c1dd1f97b4b9da50d498a6bc3e, type: 3}
+    - {fileID: 21300000, guid: 60c63c982fab4604381af18ca39f2941, type: 3}
+    - {fileID: 21300000, guid: ede6675f4d8f22a488a1576d73406979, type: 3}
+    - {fileID: 21300000, guid: 873b9d1a014586145b83fdaef3014547, type: 3}
+    - {fileID: 21300000, guid: b7d4b93c16be1be41a8e99fd3ea9daf9, type: 3}
+    - {fileID: 21300000, guid: 7a4bc769df31585408357900c55a485b, type: 3}
+    run:
+    - {fileID: 21300000, guid: c3f0a1cb6d434394a9e22cf6cdec5389, type: 3}
+    - {fileID: 21300000, guid: ed70008ff07641240afc821ae86b228b, type: 3}
+    - {fileID: 21300000, guid: b9674790a9869ad4dac11b4d46bd5213, type: 3}
+    - {fileID: 21300000, guid: 559ff33d5ca9dcd4cb913dafeb06a6a7, type: 3}
+    - {fileID: 21300000, guid: 9bbf9998fda88d845b363c9dcfa55069, type: 3}
+    - {fileID: 21300000, guid: dd89a7fada8f53640ba07c0fe5984b36, type: 3}
+    - {fileID: 21300000, guid: 5a6fe8e8777894948b5b7b524e9e8f63, type: 3}
+    - {fileID: 21300000, guid: b5f2745382d2e924bb83a74439ea67ea, type: 3}
+    - {fileID: 21300000, guid: 1f2547020409d9b47938a11c0a6a3ff9, type: 3}
+    - {fileID: 21300000, guid: f60326646f26b32498594770204a19df, type: 3}
+    hurt:
+    - {fileID: 21300000, guid: 9ab0eb4d1a530404794bd9cc66b65055, type: 3}
+    - {fileID: 21300000, guid: 2bb2ed8f3bdd2924db083e28a991f425, type: 3}
+    - {fileID: 21300000, guid: 5f0cc21bb6603c142be65922dd3d7cbc, type: 3}
+    - {fileID: 21300000, guid: d274416d647e90a479b3710bc30d451d, type: 3}
+    - {fileID: 21300000, guid: 95cfe65f654652b4285d85db2be2b932, type: 3}
+    - {fileID: 21300000, guid: 4fa9d2cba8ed0304684a48074a719297, type: 3}
+    - {fileID: 21300000, guid: 041e23a90f353d94785d1a4720662673, type: 3}
+    - {fileID: 21300000, guid: 2b22eb8b387df0a44b9ec875c7a2dd78, type: 3}
+    - {fileID: 21300000, guid: 01369a031d3dfc24ab89f2ed68dae814, type: 3}
+    - {fileID: 21300000, guid: 5b3932522717f3f48b81b70571899837, type: 3}
+    die:
+    - {fileID: 21300000, guid: 99de42082e095f5498011eff261f0d75, type: 3}
+    - {fileID: 21300000, guid: 0bb330cc6107f3d4db8a2cf3a10aed6d, type: 3}
+    - {fileID: 21300000, guid: c3f8bc2baa18d7542a81a87596914e2e, type: 3}
+    - {fileID: 21300000, guid: ab9c015667051174f8162a754cfa22f4, type: 3}
+    - {fileID: 21300000, guid: 69b8da45476c969429e4ea9055158c85, type: 3}
+    - {fileID: 21300000, guid: 74fb7e8a173fcb5478e482f04031829d, type: 3}
+    - {fileID: 21300000, guid: a5c5f44bcd2153e47ad8fd04dcab4d31, type: 3}
+    - {fileID: 21300000, guid: 60f680c960f7aa849bddccfbbb5cdf10, type: 3}
+    - {fileID: 21300000, guid: 2bf8baa501ac0c64b975f8274dbf837a, type: 3}
+    - {fileID: 21300000, guid: 33937234f4ccc39459d492102d7ef66f, type: 3}
+    idle:
+    - {fileID: 21300000, guid: 9ad07293fbc358c40b1e0796d2cc1f33, type: 3}
+    - {fileID: 21300000, guid: bc9a9f41b98c3044184872420b60f165, type: 3}
+    - {fileID: 21300000, guid: bcb8449a9253c3947b3c7b82d88350d0, type: 3}
+    - {fileID: 21300000, guid: 5a5105ab506a9da42bca5d1b14ac19c6, type: 3}
+    - {fileID: 21300000, guid: 0bbec8f45a4c4ec47aab99c755ba4388, type: 3}
+    - {fileID: 21300000, guid: 07679cd856076bf41883310de4863a8d, type: 3}
+    - {fileID: 21300000, guid: 949c152556897f8478258d9193399291, type: 3}
+    - {fileID: 21300000, guid: 1f5564bdf98112c4e97d497510477133, type: 3}
+    - {fileID: 21300000, guid: 5a44cb8f97202744a9da1e215134cfd0, type: 3}
+    - {fileID: 21300000, guid: 40e88110a1b2382438078ce61f364e02, type: 3}
+    attack:
+    - {fileID: 21300000, guid: 249f9a74f57946a4da55dd28a19ad204, type: 3}
+    - {fileID: 21300000, guid: 88198cb1e295f79419ec7acacec9d481, type: 3}
+    - {fileID: 21300000, guid: f1f710501c96cdd4badb44a3cfb4c55c, type: 3}
+    - {fileID: 21300000, guid: 9d4e99058c0e1c544b0326d751d1070c, type: 3}
+    - {fileID: 21300000, guid: f46205b372bf70a479e3bed35a22598a, type: 3}
+    - {fileID: 21300000, guid: f1cc15e7dca6c9a41b4a16f681296ab2, type: 3}
+    - {fileID: 21300000, guid: 4978a38de85348d45bb26ea273d7e9f9, type: 3}
+    - {fileID: 21300000, guid: a642a115cf9aed640bbcfece99e490ba, type: 3}
+    - {fileID: 21300000, guid: 8cf958e43adf7304e99862b29a6f6be7, type: 3}
+    - {fileID: 21300000, guid: 2df5e8bf23af86b42b4ccb6ce8072f2c, type: 3}
+    jump:
+    - {fileID: 21300000, guid: 1cf0912cfe9df174a8f11727af531ee0, type: 3}
+    - {fileID: 21300000, guid: 3819328c9fa08424098e29f327cb6bd3, type: 3}
+    - {fileID: 21300000, guid: 9636f627ddc87964589434965cb58298, type: 3}
+    - {fileID: 21300000, guid: 9724cacdac0f6fe4bbba53c612be972e, type: 3}
+    - {fileID: 21300000, guid: 4b93b67bb6dab0d4e90c8ec66614ecfc, type: 3}
+    - {fileID: 21300000, guid: 987857eb5b3f8c54daea50a727a3f000, type: 3}
+    - {fileID: 21300000, guid: 5bf69d4c17b45924a8107728c9310817, type: 3}
+    - {fileID: 21300000, guid: 3fe44a232b76b2741a93f9809d8f3805, type: 3}
+    - {fileID: 21300000, guid: 3d4d91733e0da3e4cbf27620c03f7b8d, type: 3}
+    - {fileID: 21300000, guid: a27493206982cef48b19d05b9156e2b1, type: 3}
+  framesPerSecond: 16
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  size: 1.3
+  isBoss: 0

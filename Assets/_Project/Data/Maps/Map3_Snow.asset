@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407c00e5428ed45429d609c1faa88886, type: 3}
+  m_Name: Map3_Snow
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.MapData
+  displayName: Frozen Pass
+  background: {fileID: 21300000, guid: d700bf0fd0651af4ab1d1ce0f8720344, type: 3}
+  padSprite: {fileID: 21300000, guid: 800ae3d1de855064e8018e35e524bb25, type: 3}
+  filler: {fileID: 21300000, guid: 4c739fc1949b47541902c8863e407df2, type: 3}
+  cameraColor: {r: 0.2, g: 0.3, b: 0.4, a: 1}
+  route:
+  - {x: -60, y: 550}
+  - {x: 300, y: 555}
+  - {x: 560, y: 615}
+  - {x: 700, y: 720}
+  - {x: 730, y: 860}
+  - {x: 850, y: 945}
+  - {x: 1150, y: 960}
+  - {x: 1300, y: 1005}
+  paintedSpots:
+  - {x: 755, y: 545}
+  - {x: 1145, y: 570}
+  - {x: 500, y: 790}
+  - {x: 1385, y: 915}
+  extraSpots:
+  - {x: 400, y: 420}
+  - {x: 560, y: 1000}
+  props: []
+  generated: 0
+  tiles:
+    horizontal: {fileID: 0}
+    vertical: {fileID: 0}
+    bottomRight: {fileID: 0}
+    leftBottom: {fileID: 0}
+    topRight: {fileID: 0}
+    topLeft: {fileID: 0}
+    riverVertical: {fileID: 0}
+    bridge: {fileID: 0}
+    decor: []

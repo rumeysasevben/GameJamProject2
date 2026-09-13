@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe41eb496b9cddd48b994280398531ce, type: 3}
+  m_Name: UISkin
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.UISkin
+  font: {fileID: 12800000, guid: 662012ccc61d8674a81c15d4eaa5c1b3, type: 3}
+  fontScale: 0.88
+  panel: {fileID: 0}
+  candle: {fileID: 21300000, guid: 57b2f8de7426e864dbbb4e9077b3a2b0, type: 3}
+  flame: {fileID: 21300000, guid: 93df4466b9adf724ca6106e5fa720760, type: 3}
+  soft: {fileID: 21300000, guid: e5652c8d821ea77408f612bb860ea23c, type: 3}
+  vignette: {fileID: 21300000, guid: 7f6c18ebc2185664480b0e2d8d73712d, type: 3}
+  buildRing: {fileID: 21300000, guid: 310a5ce4f88859241bd177af5bca02cf, type: 3}
+  panelColor: {r: 0.07, g: 0.07, b: 0.075, a: 0.88}
+  panelLight: {r: 0.18, g: 0.175, b: 0.17, a: 0.95}
+  overlay: {r: 0.03, g: 0.03, b: 0.035, a: 0.8}
+  text: {r: 1, g: 0.96, b: 0.9, a: 1}
+  mutedText: {r: 0.74, g: 0.72, b: 0.68, a: 1}
+  accent: {r: 1, g: 0.8, b: 0.3, a: 1}
+  danger: {r: 1, g: 0.42, b: 0.42, a: 1}
+  good: {r: 0.55, g: 1, b: 0.6, a: 1}
+  common: {r: 0.4, g: 0.75, b: 1, a: 1}
+  rare: {r: 1, g: 0.62, b: 0.25, a: 1}
+  disabled: {r: 0.27, g: 0.27, b: 0.27, a: 0.95}
+  flameColor: {r: 1, g: 1, b: 1, a: 1}
+  waxOut: {r: 0.45, g: 0.44, b: 0.42, a: 1}
+  waxColors:
+  - {r: 1, g: 0.96, b: 0.88, a: 1}

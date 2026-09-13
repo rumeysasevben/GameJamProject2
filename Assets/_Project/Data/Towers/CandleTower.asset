@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c9ebf879cb8f564a8733c959b594b40, type: 3}
+  m_Name: CandleTower
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.TowerData
+  displayName: Fire Brazier
+  kind: 1
+  description: Weak hits, but you burn and slow monsters. Keep them inside your Spike
+    Mortar's blast.
+  baseCost: 30
+  damage: 3
+  fireRate: 1.4
+  range: 2.5
+  splashRadius: 0
+  burnDps: 4.5
+  burnDuration: 2
+  slowPercent: 0.25
+  slowDuration: 1.5
+  projectileSprite: {fileID: 21300000, guid: c96789ac04687664caa3997f81c5d4c4, type: 3}
+  projectileColor: {r: 1, g: 1, b: 1, a: 1}
+  projectileSize: 0.32
+  projectileSpeed: 8
+  lobbed: 0
+  projectileSpins: 1
+  levelProjectiles:
+  - sprite: {fileID: 21300000, guid: 601853239e765324fadf94004c782050, type: 3}
+    size: 0.3
+    spin: 0
+    faceTravel: 1
+  - sprite: {fileID: 21300000, guid: 601853239e765324fadf94004c782050, type: 3}
+    size: 0.38
+    spin: 0
+    faceTravel: 1
+  - sprite: {fileID: 21300000, guid: c96789ac04687664caa3997f81c5d4c4, type: 3}
+    size: 0.55
+    spin: 1
+    faceTravel: 0
+  impactFrames:
+  - {fileID: 21300000, guid: 1e3469665cd25d7459ab91780b7c78a3, type: 3}
+  - {fileID: 21300000, guid: b2ac42f402cea284bb7a4552d942113f, type: 3}
+  - {fileID: 21300000, guid: f3778ce438cf90143ab13b2166f259fc, type: 3}
+  - {fileID: 21300000, guid: 83f86ac3ac207304b8325db24ebeecdb, type: 3}
+  impactSecondaryFrames: []
+  impactScale: 0.8
+  icon: {fileID: 21300000, guid: 6d896c4d5740d2446a8d34e63b9c209d, type: 3}
+  levelSprites:
+  - {fileID: 21300000, guid: 6d896c4d5740d2446a8d34e63b9c209d, type: 3}
+  - {fileID: 21300000, guid: 189415d06413b8f48b0b141ec79dff19, type: 3}
+  - {fileID: 21300000, guid: f71823959c2c0174689af6a5aaad5162, type: 3}
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  size: 1.15

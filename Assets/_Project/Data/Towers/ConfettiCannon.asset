@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c9ebf879cb8f564a8733c959b594b40, type: 3}
+  m_Name: ConfettiCannon
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.TowerData
+  displayName: Stone Thrower
+  kind: 0
+  description: Cheap and quick. You hit one monster at a time.
+  baseCost: 20
+  damage: 5
+  fireRate: 2.3
+  range: 2.7
+  splashRadius: 0
+  burnDps: 0
+  burnDuration: 2
+  slowPercent: 0
+  slowDuration: 1.5
+  projectileSprite: {fileID: 21300000, guid: 1e35773c64633ef4d84360db56538e63, type: 3}
+  projectileColor: {r: 1, g: 1, b: 1, a: 1}
+  projectileSize: 0.8
+  projectileSpeed: 11
+  lobbed: 0
+  projectileSpins: 1
+  levelProjectiles:
+  - sprite: {fileID: 21300000, guid: 1e35773c64633ef4d84360db56538e63, type: 3}
+    size: 0.32
+    spin: 1
+    faceTravel: 0
+  - sprite: {fileID: 21300000, guid: 1e35773c64633ef4d84360db56538e63, type: 3}
+    size: 0.4
+    spin: 1
+    faceTravel: 0
+  - sprite: {fileID: 21300000, guid: fda17401164f41247bd797427b6ceb20, type: 3}
+    size: 0.55
+    spin: 1
+    faceTravel: 0
+  impactFrames:
+  - {fileID: 21300000, guid: 33ec50d945d4c8e449bae49e5e46f135, type: 3}
+  - {fileID: 21300000, guid: 97cc7de0dce56eb4a9ac2e895ccd4a15, type: 3}
+  - {fileID: 21300000, guid: c2ad48aec289b4d4b9942bd402d5f742, type: 3}
+  - {fileID: 21300000, guid: 7a2defb463405204f9883cb96d89ada4, type: 3}
+  impactSecondaryFrames: []
+  impactScale: 0.8
+  icon: {fileID: 21300000, guid: 2cedfb8ed5cee9f4597df6a75f58e7d8, type: 3}
+  levelSprites:
+  - {fileID: 21300000, guid: 2cedfb8ed5cee9f4597df6a75f58e7d8, type: 3}
+  - {fileID: 21300000, guid: dcf3b42164824774db8ad9b0fafeb072, type: 3}
+  - {fileID: 21300000, guid: 24d5a615c875be547b57793de082aa02, type: 3}
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  size: 1.15

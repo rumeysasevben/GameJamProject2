@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bceb56ababd19854b8f6c2c359064144, type: 3}
+  m_Name: LastBreath
+  m_EditorClassIdentifier: Assembly-CSharp::TenCandles.UpgradeCard
+  title: Last Breath
+  description: When you are down to your last candle, you get +45 s. Once.
+  rarity: 1
+  effect: 13
+  value: 45
+  maxStacks: 1
+  icon: {fileID: 0}

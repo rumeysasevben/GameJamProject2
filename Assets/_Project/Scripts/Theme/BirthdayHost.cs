@@ -1,3 +1,5 @@
+using TenCandles.Core;
+using TenCandles.Waves;
 using UnityEngine;
 
 namespace TenCandles
@@ -89,6 +91,11 @@ namespace TenCandles
                 hopAt = Time.unscaledTime;
                 Say($"My birthday is almost here! Will you keep my candles lit?", 4.5f);
             }
+            else if (state == GameState.Birthday)
+            {
+                hopAt = Time.unscaledTime;
+                Say($"Happy birthday to me! I'm {GameManager.Instance.Age}!", 4f);
+            }
         }
 
         void OnCandleOut(int index)
@@ -106,7 +113,7 @@ namespace TenCandles
 
         void OnWaveStarted(int year)
         {
-            if (year >= 10) Say("That's the Orc Warlord! You have to stop it!", 3f);
+            if (WaveGenerator.YearOfAge(year) == Balance.YearsPerDecade) Say("That's the Orc Warlord! You have to stop it!", 3f);
             else if (WaveManager.Instance != null && WaveManager.Instance.SecondRoadOpensThisYear(year)) Say("They're coming down the other road too! Watch both sides!", 3.5f);
         }
 

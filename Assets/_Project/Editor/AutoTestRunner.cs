@@ -69,7 +69,10 @@ namespace TenCandles.EditorTools
                 var bot = new GameObject("AutoPlayer").AddComponent<AutoPlayer>();
                 bot.useCards = SessionState.GetBool(CardsKey, true);
                 bot.reserveSeconds = ArgFloat("reserve", bot.reserveSeconds);
+                bot.avoidExtraCandles = Environment.GetCommandLineArgs().Contains("-bot.noExtraCandles");
                 bot.Finished = (victory, report) => Finish(victory, report);
+                // -bot.shots: Logs/autoplay_birthday_<age>.png and Logs/autoplay_stage<tier>_<stage>.png
+                if (Environment.GetCommandLineArgs().Contains("-bot.shots")) bot.Snapshot = tag => Capture($"Logs/autoplay_{tag}.png");
             }
             else if (change == PlayModeStateChange.EnteredEditMode)
             {

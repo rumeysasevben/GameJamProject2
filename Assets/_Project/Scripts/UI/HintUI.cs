@@ -55,12 +55,12 @@ namespace TenCandles
                 return;
             }
 
-            bool early = gm.Year <= 1 && build.TowersBuilt == 0;
+            bool early = gm.Age <= 1 && build.TowersBuilt == 0;
             if (early && (gm.State == GameState.Intermission || gm.State == GameState.Wave))
                 label.text = build.SelectedType == null
                     ? (build.RingSpot != null ? "Pick your tower from the ring (1-4)" : "Click a glowing pad next to the road to build your first tower")
                     : "Now click a glowing pad next to the road";
-            else if (gm.Year == 1 && gm.State == GameState.Intermission)
+            else if (gm.Age == 1 && gm.State == GameState.Intermission)
                 label.text = "Press SPACE to call the wave early; you get half the wait back";
             else
                 label.text = "";

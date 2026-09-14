@@ -1,3 +1,4 @@
+using TenCandles.Lifetime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -43,16 +44,18 @@ namespace TenCandles
             var cc = CandleClock.Instance;
             if (gm == null || cc == null || year == null) return;
 
-            int shownYear = Mathf.Clamp(gm.Year, 1, gm.FinalYear);
-            year.text = $"YEAR {shownYear} / {gm.FinalYear}";
+            int shownAge = Mathf.Clamp(gm.Age, 1, gm.FinalAge);
+            year.text = $"AGE {shownAge} / {gm.FinalAge}";
             clock.text = UIFactory.FormatSeconds(cc.TimeRemaining);
 
             bool lastCandle = cc.LitCandles <= 1 && !gm.IsOver;
             clock.color = lastCandle && Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.4f ? skin.danger : skin.accent;
 
-            var era = ThemeManager.Instance != null ? ThemeManager.Instance.CurrentEra : null;
             string candles = $"You have {cc.LitCandles} of {cc.CandleCount} candles burning";
-            caption.text = era != null ? $"{candles}  ·  {era.displayName}" : candles;
+            var slot = gm.Lifetime != null ? gm.Lifetime.CurrentSlot : null;
+            var build = BuildManager.Instance;
+            string towers = build != null && build.TowerCapacity < int.MaxValue ? $"  ·  Towers {build.TowersBuilt}/{build.TowerCapacity}" : "";
+            caption.text = slot != null ? $"{candles}{towers}  ·  {slot.Stage.Display()}" : candles;
         }
     }
 }

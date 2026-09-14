@@ -82,18 +82,18 @@ namespace TenCandles
             {
                 title.text = $"HAPPY BIRTHDAY, {Story.Hero.ToUpperInvariant()}!";
                 title.color = skin.accent;
-                subtitle.text = $"You kept {Story.HeroPossessive} candles burning for ten years. The cake is safe.";
+                subtitle.text = $"You kept {Story.HeroPossessive} candles burning for a whole lifetime. The cake is safe.";
             }
             else
             {
                 title.text = "LIGHTS OUT";
                 title.color = skin.danger;
-                subtitle.text = $"You lost {Story.HeroPossessive} last candle in year {gm.Year}.";
+                subtitle.text = $"You lost {Story.HeroPossessive} last candle at age {gm.Age}.";
             }
 
-            int years = victory ? gm.FinalYear : Mathf.Max(0, gm.Year - 1);
+            int years = victory ? gm.FinalAge : Mathf.Max(0, gm.Age - 1);
             stats.text =
-                $"Years you survived   <color=#{Hex(skin.text)}>{years}</color>\n" +
+                $"Years you lived   <color=#{Hex(skin.text)}>{years}</color>\n" +
                 $"Monsters you defeated   <color=#{Hex(skin.text)}>{kills}</color>\n" +
                 $"Candles you lost   <color=#{Hex(skin.text)}>{leaks}</color>\n" +
                 $"Towers you built   <color=#{Hex(skin.text)}>{(build != null ? build.TowersBuilt : 0)}</color>\n" +

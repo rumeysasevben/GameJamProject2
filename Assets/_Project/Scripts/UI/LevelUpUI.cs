@@ -105,7 +105,7 @@ namespace TenCandles
             offer = cards;
             openedAt = Time.unscaledTime;
             var gm = GameManager.Instance;
-            heading.text = gm != null ? $"YOU SURVIVED YEAR {gm.Year}!\n<size=34>" + (gm.Year + 2 < gm.FinalYear ? "Choose your gift. The next one comes in two years." : "Choose your last gift. Make it count.") + "</size>" : "LEVEL UP";
+            heading.text = gm != null ? $"YOU SURVIVED AGE {gm.Age}!\n<size=34>" + (gm.Age + 2 < gm.FinalAge ? "Choose your gift. The next one comes in two years." : "Choose your last gift. Make it count.") + "</size>" : "LEVEL UP";
 
             var levelUp = LevelUpManager.Instance;
             for (int i = 0; i < Slots; i++)

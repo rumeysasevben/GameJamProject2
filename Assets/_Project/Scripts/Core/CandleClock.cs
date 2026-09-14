@@ -1,3 +1,4 @@
+using TenCandles.Core;
 using UnityEngine;
 
 namespace TenCandles
@@ -5,16 +6,13 @@ namespace TenCandles
     // The only owner of timeRemaining. Every gain, cost and penalty goes through here.
     public class CandleClock : MonoBehaviour
     {
-        public const float SecondsPerCandle = 30f;
-        public const int BaseCandleCount = 10;
-
         public static CandleClock Instance { get; private set; }
-
-        [SerializeField] float drainRate = 1f;
 
         public float TimeRemaining { get; private set; }
         public float MaxTime { get; private set; }
-        public int CandleCount => Mathf.RoundToInt(MaxTime / SecondsPerCandle);
+        // Current cap in candles: the stage's cap plus any candles granted by cards.
+        public int CandleCap { get; private set; }
+        public int CandleCount => CandleCap;
         public int LitCandles => litCandles;
 
         // GameManager turns this on for Intermission and Wave only.
@@ -26,8 +24,9 @@ namespace TenCandles
         void Awake()
         {
             Instance = this;
-            MaxTime = BaseCandleCount * SecondsPerCandle;
-            TimeRemaining = MaxTime;
+            CandleCap = Balance.BaseCandleCount;
+            MaxTime = CandleCap * Balance.SecondsPerCandle;
+            TimeRemaining = Balance.StartTime;
             litCandles = LitCount(TimeRemaining);
         }
 
@@ -40,7 +39,7 @@ namespace TenCandles
 
         void Update()
         {
-            if (IsDraining) SetTime(TimeRemaining - drainRate * StatRegistry.DrainMultiplier * Time.deltaTime);
+            if (IsDraining) SetTime(TimeRemaining - Balance.DrainRatePerSecond * StatRegistry.DrainMultiplier * Time.deltaTime);
         }
 
         // Kill rewards, early-call bonus, card bonuses. Anything above MaxTime is lost.
@@ -69,16 +68,32 @@ namespace TenCandles
             return true;
         }
 
+        // Stage change or card effect. Lowering the cap clamps TimeRemaining to the new MaxTime at once.
+        public void SetCandleCap(int candles)
+        {
+            candles = Mathf.Max(1, candles);
+            if (candles == CandleCap) return;
+
+            CandleCap = candles;
+            MaxTime = candles * Balance.SecondsPerCandle;
+            // Candles cut off by a lower cap leave the bar; they are not "blown out" by an enemy.
+            litCandles = Mathf.Min(litCandles, candles);
+            GameEvents.RaiseCandleCountChanged(candles);
+            SetTime(TimeRemaining);
+        }
+
         // "The Eleventh Candle" card: one more candle on the bar, lit.
         public void AddCandle()
         {
-            MaxTime += SecondsPerCandle;
-            GameEvents.RaiseCandleCountChanged(CandleCount);
-            Add(SecondsPerCandle, "You earned a new candle!");
+            SetCandleCap(CandleCap + 1);
+            Add(Balance.SecondsPerCandle, "You earned a new candle!");
         }
 
+        public int FullCandles => Mathf.FloorToInt(TimeRemaining / Balance.SecondsPerCandle);
+        public float PartialFill => (TimeRemaining % Balance.SecondsPerCandle) / Balance.SecondsPerCandle;
+
         // 0..1 height of candle i, straight from the GDD formula.
-        public float CandleFill(int index) => Mathf.Clamp01(TimeRemaining / SecondsPerCandle - index);
+        public float CandleFill(int index) => Mathf.Clamp01(TimeRemaining / Balance.SecondsPerCandle - index);
 
         void SetTime(float value)
         {
@@ -101,6 +116,6 @@ namespace TenCandles
             }
         }
 
-        static int LitCount(float time) => Mathf.CeilToInt(time / SecondsPerCandle - 0.0001f);
+        static int LitCount(float time) => Mathf.CeilToInt(time / Balance.SecondsPerCandle - 0.0001f);
     }
 }

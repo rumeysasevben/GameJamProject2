@@ -1,4 +1,6 @@
 using System.Globalization;
+using TenCandles.Core;
+using TenCandles.Lifetime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,15 +11,13 @@ namespace TenCandles
     {
         public static GameManager Instance { get; private set; }
 
-        [SerializeField] float intermissionDuration = 10f;
-        [SerializeField] float earlyCallBonusFactor = 0.5f;
-        [SerializeField] int finalYear = 10;
-
         public GameState State { get; private set; } = GameState.Boot;
-        public int Year { get; private set; }
-        public int FinalYear => finalYear;
+        public LifetimeManager Lifetime { get; private set; }
+        // 1..40. The age whose wave is next or in progress.
+        public int Age => Lifetime != null ? Lifetime.Age : 0;
+        public int FinalAge => Balance.TotalYears;
         public float IntermissionLeft { get; private set; }
-        public float EarlyCallBonus => IntermissionLeft * earlyCallBonusFactor;
+        public float EarlyCallBonus => IntermissionLeft * Balance.EarlyCallBonusMul;
         public bool IsOver => State == GameState.Victory || State == GameState.Defeat;
 
         // "Play again" skips the main menu; "Main menu" does not.
@@ -31,6 +31,9 @@ namespace TenCandles
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
             StatRegistry.Reset();
+            // Added at runtime so the existing scene needs no rebuild.
+            Lifetime = GetComponent<LifetimeManager>();
+            if (Lifetime == null) Lifetime = gameObject.AddComponent<LifetimeManager>();
         }
 
         void OnDestroy()
@@ -88,7 +91,7 @@ namespace TenCandles
             if (State != GameState.Boot) return;
             // The SPACE that pressed "Play" must not also call the first wave early.
             startedFrame = Time.frameCount;
-            Year = 1;
+            Lifetime.BeginRun(System.Environment.TickCount);
             BeginIntermission();
         }
 
@@ -98,6 +101,16 @@ namespace TenCandles
             float bonus = EarlyCallBonus;
             if (bonus > 0.05f) CandleClock.Instance.Add(bonus, "You called it early");
             StartWave();
+        }
+
+        // Phase 1: the birthday screen only advances to the next stage.
+        public void ChooseBirthday(BirthdayChoice choice)
+        {
+            if (State != GameState.Birthday || choice != BirthdayChoice.Advance) return;
+            Lifetime.ResolveBirthday(choice);
+            // The key that closed the birthday screen must not also call the next wave early.
+            startedFrame = Time.frameCount;
+            NextYear();
         }
 
         public void Restart()
@@ -121,46 +134,58 @@ namespace TenCandles
 
         void BeginIntermission()
         {
-            IntermissionLeft = intermissionDuration;
+            IntermissionLeft = Balance.IntermissionLength;
             Enter(GameState.Intermission);
         }
 
         void StartWave()
         {
             Enter(GameState.Wave);
-            WaveManager.Instance.StartWave(Year);
+            WaveManager.Instance.StartWave(Age);
         }
 
-        void OnWaveCleared(int year)
+        void OnWaveCleared(int age)
         {
             if (IsOver) return;
 
-            if (year >= finalYear)
+            if (age >= FinalAge)
             {
                 Enter(GameState.Victory);
                 GameEvents.RaiseGameOver(true);
                 return;
             }
 
-            // Gifts only come every few years; other years go straight to the next intermission.
+            // Gifts only come every few years; other years go straight on.
             var levelUp = LevelUpManager.Instance;
-            if (levelUp == null || !levelUp.IsOfferYear(year))
+            if (levelUp == null || !levelUp.IsOfferYear(age))
             {
-                NextYear();
+                AfterCardPick();
                 return;
             }
             Enter(GameState.LevelUp);
-            if (!levelUp.Offer(year)) NextYear();
+            if (!levelUp.Offer(age)) AfterCardPick();
         }
 
         void OnUpgradeChosen(UpgradeCard card)
         {
-            if (State == GameState.LevelUp) NextYear();
+            if (State == GameState.LevelUp) AfterCardPick();
+        }
+
+        // Ages 10, 20 and 30 end a decade with a birthday; every other age moves straight on.
+        void AfterCardPick()
+        {
+            if (!LifetimeManager.IsBirthdayAge(Age))
+            {
+                NextYear();
+                return;
+            }
+            Enter(GameState.Birthday);
+            GameEvents.RaiseBirthdayOffered(false, true);
         }
 
         void NextYear()
         {
-            Year++;
+            Lifetime.AdvanceAge();
             BeginIntermission();
         }
 
@@ -176,7 +201,7 @@ namespace TenCandles
             State = next;
             var clock = CandleClock.Instance;
             if (clock != null) clock.IsDraining = next == GameState.Intermission || next == GameState.Wave;
-            TimeControl.SetPaused(next == GameState.LevelUp || next == GameState.Defeat);
+            TimeControl.SetPaused(next == GameState.LevelUp || next == GameState.Birthday || next == GameState.Defeat);
             GameEvents.RaiseStateChanged(next);
         }
     }

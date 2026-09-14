@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TenCandles.Lifetime;
 using UnityEngine;
 
 namespace TenCandles
@@ -11,7 +12,14 @@ namespace TenCandles
     {
         public bool useCards = true;
         public float reserveSeconds = 40f;
+        public bool avoidExtraCandles;
         public System.Action<bool, string> Finished;
+        // Set by AutoTestRunner with -bot.shots; receives a file tag.
+        public System.Action<string> Snapshot;
+
+        const int BirthdayHoldFrames = 6;
+        const int StageShotFrames = 30;
+        int birthdayFrames, stageShotIn;
 
         readonly StringBuilder report = new StringBuilder();
         int leaksThisYear, leaksTotal;
@@ -46,6 +54,7 @@ namespace TenCandles
             GameEvents.GameOver += OnGameOver;
             GameEvents.TowerBuilt += OnTowerBuilt;
             GameEvents.EnemyKilled += OnKilled;
+            GameEvents.StateChanged += OnStateChanged;
         }
 
         void OnDisable()
@@ -56,9 +65,17 @@ namespace TenCandles
             GameEvents.GameOver -= OnGameOver;
             GameEvents.TowerBuilt -= OnTowerBuilt;
             GameEvents.EnemyKilled -= OnKilled;
+            GameEvents.StateChanged -= OnStateChanged;
         }
 
         void OnTowerBuilt(Tower t) => built.Add(t);
+
+        GameState previousState, currentState;
+        void OnStateChanged(GameState s)
+        {
+            previousState = currentState;
+            currentState = s;
+        }
 
         void Update()
         {
@@ -68,6 +85,32 @@ namespace TenCandles
             if (gm.State == GameState.Boot)
             {
                 gm.StartGame();
+                stageShotIn = StageShotFrames;
+                return;
+            }
+
+            // Optional screenshots: every birthday screen, and the HUD shortly after each stage begins.
+            if (Snapshot != null && stageShotIn > 0 && --stageShotIn == 0)
+            {
+                var s = gm.Lifetime.CurrentSlot;
+                Snapshot($"stage{s.TierIndex}_{s.Stage.ToString().ToLowerInvariant()}");
+            }
+
+            if (gm.State == GameState.Birthday)
+            {
+                // Hold the screen for a few frames so it is drawn before it can be captured.
+                if (Snapshot != null && ++birthdayFrames < BirthdayHoldFrames)
+                {
+                    if (birthdayFrames == BirthdayHoldFrames - 1) Snapshot($"birthday_{gm.Age}");
+                    return;
+                }
+                birthdayFrames = 0;
+                stageShotIn = StageShotFrames;
+                var slot = gm.Lifetime.CurrentSlot;
+                report.AppendLine($"    birthday at {gm.Age}: leaving {slot.Stage} (tier {slot.TierIndex})");
+                gm.ChooseBirthday(BirthdayChoice.Advance);
+                slot = gm.Lifetime.CurrentSlot;
+                report.AppendLine($"    entering {slot.Stage} (tier {slot.TierIndex}, ages {slot.AgeFrom}-{slot.AgeTo}), candle cap {CandleClock.Instance.CandleCap}");
                 return;
             }
             if (gm.State != GameState.Intermission && gm.State != GameState.Wave) return;
@@ -92,6 +135,8 @@ namespace TenCandles
 
                 if (step.index >= ofKind.Count)
                 {
+                    // Over the age limit: skip new towers and keep upgrading.
+                    if (build.AtTowerCapacity) continue;
                     TowerData data = build.Towers.First(t => t.kind == step.kind);
                     float cost = build.BuildCost(data);
                     if (cost > 0f && clock.TimeRemaining - cost < reserveSeconds) return false;
@@ -148,6 +193,8 @@ namespace TenCandles
                 for (int i = 0; i < cards.Length; i++)
                 {
                     int rank = System.Array.IndexOf(CardPriority, cards[i].effect);
+                    // Keeps the candle bar at the bare stage caps, for checking them.
+                    if (avoidExtraCandles && cards[i].effect == CardEffect.ExtraCandle) rank = CardPriority.Length;
                     if (rank >= 0 && rank < bestRank)
                     {
                         bestRank = rank;
@@ -175,7 +222,9 @@ namespace TenCandles
             var towers = FindObjectsByType<Tower>(FindObjectsSortMode.None);
             float dps = towers.Sum(t => t.Dps);
             string build = string.Join(" ", towers.OrderBy(t => t.Data.kind).Select(t => $"{Code(t.Data.kind)}{t.Level}"));
-            report.AppendLine($"Year {year,2} cleared | time {CandleClock.Instance.TimeRemaining,6:0.0}s | kills +{killIncome,5:0.0}s | leaks {leaksThisYear} | raw DPS {dps,6:0.0} | {build}");
+            var bm = BuildManager.Instance;
+            var clock = CandleClock.Instance;
+            report.AppendLine($"Age {year,2} cleared | time {clock.TimeRemaining,6:0.0}s | candles {clock.CandleCap,2} | towers {bm.TowersBuilt}/{bm.TowerCapacity} | kills +{killIncome,5:0.0}s | leaks {leaksThisYear} | raw DPS {dps,6:0.0} | {build}");
             leaksThisYear = 0;
             killIncome = 0f;
         }
@@ -197,7 +246,13 @@ namespace TenCandles
             var gm = GameManager.Instance;
             report.AppendLine(victory
                 ? $"VICTORY with {CandleClock.Instance.TimeRemaining:0.0}s left, {leaksTotal} leaks, game time {Time.timeSinceLevelLoad:0}s"
-                : $"DEFEAT in year {gm.Year} ({leaksTotal} leaks, {WaveManager.Instance.Remaining} guests still coming), game time {Time.timeSinceLevelLoad:0}s");
+                : $"DEFEAT at age {gm.Age} ({leaksTotal} leaks, {WaveManager.Instance.Remaining} guests still coming), game time {Time.timeSinceLevelLoad:0}s");
+            if (!victory)
+            {
+                report.AppendLine($"    state before defeat: {previousState}, wave running {WaveManager.Instance.IsRunning}, alive counter {WaveManager.Instance.Alive}, timeScale {Time.timeScale}, dt {Time.deltaTime}, birthday hold frame {birthdayFrames}");
+                foreach (var e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+                    report.AppendLine($"    on map: {e.Data.displayName}: alive {e.IsAlive}, targetable {e.IsTargetable}, progress {e.PathProgress:0.0}");
+            }
             Finished?.Invoke(victory, report.ToString());
         }
     }

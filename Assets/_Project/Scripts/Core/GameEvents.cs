@@ -1,4 +1,5 @@
 using System;
+using TenCandles.Lifetime;
 using UnityEngine;
 
 namespace TenCandles
@@ -17,10 +18,15 @@ namespace TenCandles
 
         // Flow
         public static event Action<GameState> StateChanged;
-        public static event Action<int> WaveStarted;               // year
-        public static event Action<int> WaveCleared;               // year
+        public static event Action<int> WaveStarted;               // age
+        public static event Action<int> WaveCleared;               // age
         public static event Action<int> EraChanged;                // era index
         public static event Action<bool> GameOver;                 // victory
+
+        // Lifetime
+        public static event Action<bool, bool> BirthdayOffered;                 // stayLegal, advanceLegal
+        public static event Action<BirthdayChoice, DecadeStage> BirthdayChosen; // choice, new stage
+        public static event Action<DecadeStage, int> StageChanged;              // stage, tier
 
         // Enemies
         public static event Action<Enemy> EnemySpawned;
@@ -51,6 +57,10 @@ namespace TenCandles
         public static void RaiseWaveCleared(int year) => WaveCleared?.Invoke(year);
         public static void RaiseEraChanged(int era) => EraChanged?.Invoke(era);
         public static void RaiseGameOver(bool victory) => GameOver?.Invoke(victory);
+
+        public static void RaiseBirthdayOffered(bool stayLegal, bool advanceLegal) => BirthdayOffered?.Invoke(stayLegal, advanceLegal);
+        public static void RaiseBirthdayChosen(BirthdayChoice choice, DecadeStage stage) => BirthdayChosen?.Invoke(choice, stage);
+        public static void RaiseStageChanged(DecadeStage stage, int tier) => StageChanged?.Invoke(stage, tier);
 
         public static void RaiseEnemySpawned(Enemy e) => EnemySpawned?.Invoke(e);
         public static void RaiseEnemyDamaged(Enemy e, float amount, bool crit) => EnemyDamaged?.Invoke(e, amount, crit);

@@ -40,6 +40,7 @@ namespace TenCandles
             var overlay = UIFactory.Canvas("Overlay Canvas", transform, 20);
             var overlayRoot = (RectTransform)overlay.transform;
             overlayRoot.gameObject.AddComponent<LevelUpUI>().Build(overlayRoot);
+            overlayRoot.gameObject.AddComponent<BirthdayUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<MainMenuUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<PauseMenuUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<EndScreenUI>().Build(overlayRoot);

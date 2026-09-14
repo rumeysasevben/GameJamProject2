@@ -1,3 +1,4 @@
+using TenCandles.Core;
 using UnityEngine;
 
 namespace TenCandles
@@ -97,7 +98,14 @@ namespace TenCandles
         }
 
         void OnCandleRestored(int index) => Play(bank.candleRelight, 0.7f);
-        void OnCandleCountChanged(int count) => Play(bank.newCandle, 1f, 0f);
+        int lastCandleCount = Balance.BaseCandleCount;
+
+        // Only a gained candle gets the fanfare; a stage lowering the cap does not.
+        void OnCandleCountChanged(int count)
+        {
+            if (count > lastCandleCount) Play(bank.newCandle, 1f, 0f);
+            lastCandleCount = count;
+        }
         void OnWaveStarted(int year) => Play(bank.waveStart, 0.8f, 0f);
         void OnWaveCleared(int year) => Play(bank.waveCleared, 1f, 0.03f);
         void OnLevelUpOffered(UpgradeCard[] cards) => Play(bank.levelUp, 0.9f, 0f);

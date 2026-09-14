@@ -1,3 +1,4 @@
+using TenCandles.Core;
 using UnityEngine;
 
 namespace TenCandles
@@ -5,7 +6,6 @@ namespace TenCandles
     // Turns game events into time gains and losses. All of them go through CandleClock.
     public class TimeRules : MonoBehaviour
     {
-        [SerializeField] float leakPenalty = 30f;
         [SerializeField] float leakHitStop = 0.6f;
         [SerializeField, Range(0f, 1f)] float leakHitStopScale = 0.1f;
         [SerializeField] float lastBreathBonus = 45f;
@@ -38,7 +38,7 @@ namespace TenCandles
         void OnEnemyLeaked(Enemy enemy)
         {
             if (Clock == null) return;
-            float penalty = Mathf.Max(0f, leakPenalty - StatRegistry.LeakPenaltyReduction);
+            float penalty = Mathf.Max(0f, Balance.LeakPenalty - StatRegistry.LeakPenaltyReduction);
             Clock.Drain(penalty, "You lost a candle");
             TimeControl.HitStop(leakHitStop, leakHitStopScale);
         }
@@ -51,7 +51,7 @@ namespace TenCandles
 
         void OnTimeChanged(float current, float max)
         {
-            if (!StatRegistry.LastBreathArmed || current <= 0f || current > CandleClock.SecondsPerCandle) return;
+            if (!StatRegistry.LastBreathArmed || current <= 0f || current > Balance.SecondsPerCandle) return;
             StatRegistry.LastBreathArmed = false;
             Clock.Add(lastBreathBonus, "Last Breath");
         }

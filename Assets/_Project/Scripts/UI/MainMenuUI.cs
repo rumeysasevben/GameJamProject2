@@ -125,7 +125,8 @@ namespace TenCandles
                 "Your candles are your clock <i>and</i> your wallet: they burn down all the time.\n" +
                 $"You pay for towers with seconds. Every monster you defeat gives you seconds <color=#{good}>back</color>.\n" +
                 $"If a monster reaches the cake, you lose a <color=#{bad}>whole candle</color>.\n" +
-                "Survive ten years. After each one you choose a gift. You will need them.\n\n" +
+                "Live forty years, one decade at a time. Every few years you choose a gift.\n" +
+                "Each birthday brings a new stage: more towers allowed, but fewer candles.\n\n" +
                 $"<color=#{accent}>CONTROLS</color>\n" +
                 "Click a glowing pad to open the build ring  ·  1-4 build a tower\n" +
                 "Click a tower, then U to upgrade it  ·  Right-click to cancel\n" +

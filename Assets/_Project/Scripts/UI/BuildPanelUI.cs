@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TenCandles.Lifetime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,6 +23,7 @@ namespace TenCandles
 
         readonly List<Entry> entries = new List<Entry>();
         Text description;
+        Text header;
         UISkin skin;
         RectTransform panel;
         Text arrow;
@@ -42,7 +44,7 @@ namespace TenCandles
             panel.offsetMin = new Vector2(0f, 0f);
             panel.offsetMax = new Vector2(HUD.SidePanelWidth, -HUD.TopBarHeight);
 
-            var header = UIFactory.Label(panel, "Header", "TOWERS", 24, TextAnchor.MiddleCenter, skin.accent);
+            header = UIFactory.Label(panel, "Header", "TOWERS", 24, TextAnchor.MiddleCenter, skin.accent);
             header.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(220f, 36f));
 
             const float height = 104f, gap = 10f;
@@ -120,10 +122,14 @@ namespace TenCandles
             }
             arrow.text = open ? "<" : ">";
 
+            bool full = build.AtTowerCapacity;
+            header.text = build.TowerCapacity < int.MaxValue ? $"TOWERS  {build.TowersBuilt}/{build.TowerCapacity}" : "TOWERS";
+            header.color = full ? skin.danger : skin.accent;
+
             foreach (var e in entries)
             {
                 float cost = build.BuildCost(e.data);
-                bool affordable = build.CanAfford(cost);
+                bool affordable = build.CanAfford(cost) && !full;
                 bool selected = build.SelectedType == e.data;
 
                 e.cost.text = cost <= 0f ? "FREE" : $"{cost:0} s";
@@ -135,7 +141,9 @@ namespace TenCandles
             }
 
             TowerData focus = build.SelectedType;
-            if (focus != null)
+            if (full && canBuild)
+                description.text = $"You have all the towers you can have at age {GameManager.Instance.Age}. One more at age {LifetimeManager.NextCapacityAge(GameManager.Instance.Age)}.\nUpgrade the ones you have.";
+            else if (focus != null)
                 description.text = $"<b>{focus.displayName}</b>\n{focus.description}\n\nClick a glowing pad to build it.";
             else if (build.SelectedTower == null && canBuild)
                 description.text = "Click a pad on the map to open the build ring, or pick a tower here first.\nEvery tower you build costs you seconds.";

@@ -1,3 +1,6 @@
+using TenCandles.Core;
+using TenCandles.Lifetime;
+using TenCandles.Waves;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -56,7 +59,7 @@ namespace TenCandles
         void OnWaveStarted(int year)
         {
             if (title == null) return;
-            title.text = year >= 10 ? "FINAL YEAR" : $"YEAR {year}";
+            title.text = year >= Balance.TotalYears ? "FINAL YEAR" : $"AGE {year}";
             shownAt = Time.unscaledTime;
             currentYear = year;
             eraChangedThisYear = year > 1 && (year - 1) % 2 == 0;
@@ -67,8 +70,12 @@ namespace TenCandles
         {
             if (subtitle == null) return;
             var era = ThemeManager.Instance != null ? ThemeManager.Instance.CurrentEra : null;
+            int yearInDecade = WaveGenerator.YearOfAge(currentYear);
+            var slot = LifetimeManager.Instance != null ? LifetimeManager.Instance.CurrentSlot : null;
             if (currentYear == 1) subtitle.text = $"{Story.HeroPossessive} birthday is coming. Guard the cake!";
-            else if (currentYear >= 10) subtitle.text = "The Orc Warlord is coming. This is your last stand.";
+            else if (currentYear >= Balance.TotalYears) subtitle.text = "The Orc Warlord is coming. This is your last stand.";
+            else if (yearInDecade == Balance.YearsPerDecade) subtitle.text = "The Orc Warlord is coming. Hold on until the birthday!";
+            else if (yearInDecade == 1 && slot != null) subtitle.text = $"{slot.Stage.Display()} begins: ages {slot.AgeFrom}-{slot.AgeTo}";
             else if (WaveManager.Instance != null && WaveManager.Instance.SecondRoadOpensThisYear(currentYear)) subtitle.text = "Monsters found the second road. Guard both paths!";
             else subtitle.text = eraChangedThisYear && era != null ? $"{Story.HeroPossessive} party grows: {era.displayName}" : "";
         }

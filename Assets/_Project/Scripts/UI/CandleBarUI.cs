@@ -100,6 +100,12 @@ namespace TenCandles
             if (clock == null) return;
 
             while (candles.Count < clock.CandleCount) AddCandle();
+            // A later stage lowers the cap: the extra candles leave the bar.
+            while (candles.Count > clock.CandleCount)
+            {
+                Destroy(candles[candles.Count - 1].root.gameObject);
+                candles.RemoveAt(candles.Count - 1);
+            }
 
             float dt = Time.unscaledDeltaTime;
             float now = Time.unscaledTime;

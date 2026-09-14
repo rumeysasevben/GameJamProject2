@@ -1,4 +1,5 @@
 using System;
+using TenCandles.Lifetime;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -69,6 +70,10 @@ namespace TenCandles
 
         public bool HasFreeBuild => StatRegistry.FreeBuilds > 0;
 
+        // Age-derived (spec §7). No lifetime yet (main menu) means no limit to show.
+        public int TowerCapacity => LifetimeManager.Instance != null && LifetimeManager.Instance.Run != null ? LifetimeManager.Instance.TowerCapacity : int.MaxValue;
+        public bool AtTowerCapacity => TowersBuilt >= TowerCapacity;
+
         public float BuildCost(TowerData data) => HasFreeBuild ? 0f : Mathf.Round(data.baseCost * StatRegistry.BuildCostMultiplier);
 
         public float UpgradeCost(Tower tower) => tower.IsMaxLevel ? 0f : Mathf.Round(tower.Data.UpgradeCost(tower.Level + 1) * StatRegistry.UpgradeCostMultiplier);
@@ -117,6 +122,12 @@ namespace TenCandles
         public bool TryBuild(TowerData data, TowerSpot spot)
         {
             if (!CanBuildNow || spot == null || !spot.IsEmpty) return false;
+            if (AtTowerCapacity)
+            {
+                int age = LifetimeManager.Instance.Age;
+                GameEvents.RaiseBuildFailed($"You can have {TowerCapacity} towers at age {age}. One more at age {LifetimeManager.NextCapacityAge(age)}.");
+                return false;
+            }
 
             bool free = HasFreeBuild;
             float cost = BuildCost(data);

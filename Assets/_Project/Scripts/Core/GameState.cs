@@ -6,6 +6,7 @@ namespace TenCandles
         Intermission,
         Wave,
         LevelUp,
+        Birthday,
         Victory,
         Defeat
     }

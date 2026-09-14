@@ -104,15 +104,15 @@ namespace TenCandles
                     break;
 
                 case GameState.Intermission:
-                    title.text = $"YEAR {gm.Year} STARTS IN";
+                    title.text = $"AGE {gm.Age} STARTS IN";
                     big.text = Mathf.CeilToInt(gm.IntermissionLeft).ToString();
                     detail.text = "Waiting burns your candles too.";
-                    ShowPreview(waves, gm.Year);
+                    ShowPreview(waves, gm.Age);
                     earlyLabel.text = $"CALL EARLY\n<size=14>[SPACE]</size>\n<color=#{ColorUtility.ToHtmlStringRGB(skin.good)}>+{gm.EarlyCallBonus:0.0} s</color>";
                     break;
 
                 case GameState.Wave:
-                    title.text = $"YEAR {gm.Year}";
+                    title.text = $"AGE {gm.Age}";
                     big.text = waves.Remaining.ToString();
                     detail.text = waves.Remaining == 1 ? "enemy left" : "enemies left";
                     break;
@@ -121,6 +121,12 @@ namespace TenCandles
                     title.text = "LEVEL UP";
                     big.text = "";
                     detail.text = "Choose your gift.";
+                    break;
+
+                case GameState.Birthday:
+                    title.text = "HAPPY BIRTHDAY";
+                    big.text = gm.Age.ToString();
+                    detail.text = "A new decade begins.";
                     break;
 
                 default:

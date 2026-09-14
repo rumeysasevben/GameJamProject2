@@ -69,6 +69,7 @@ namespace TenCandles
             var era = ThemeManager.Instance != null ? ThemeManager.Instance.CurrentEra : null;
             if (currentYear == 1) subtitle.text = $"{Story.HeroPossessive} birthday is coming. Guard the cake!";
             else if (currentYear >= 10) subtitle.text = "The Orc Warlord is coming. This is your last stand.";
+            else if (WaveManager.Instance != null && WaveManager.Instance.SecondRoadOpensThisYear(currentYear)) subtitle.text = "Monsters found the second road. Guard both paths!";
             else subtitle.text = eraChangedThisYear && era != null ? $"{Story.HeroPossessive} party grows: {era.displayName}" : "";
         }
 

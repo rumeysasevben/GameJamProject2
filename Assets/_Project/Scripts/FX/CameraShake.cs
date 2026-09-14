@@ -26,7 +26,7 @@ namespace TenCandles
 
         public static void Add(float amount)
         {
-            if (Instance != null) Instance.trauma = Mathf.Clamp01(Instance.trauma + amount);
+            if (Instance != null && GameSettings.ScreenShake) Instance.trauma = Mathf.Clamp01(Instance.trauma + amount);
         }
 
         void LateUpdate()

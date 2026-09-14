@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: TipJar
   m_EditorClassIdentifier: Assembly-CSharp::TenCandles.UpgradeCard
   title: Tip Jar
-  description: You get +0.4 s more for every monster you defeat.
+  description: You get +0.5 s more for every monster you defeat.
   rarity: 0
   effect: 3
-  value: 0.4
-  maxStacks: 3
+  value: 0.5
+  kind: 0
+  maxStacks: 1
   icon: {fileID: 0}

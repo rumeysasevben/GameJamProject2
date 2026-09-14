@@ -33,8 +33,12 @@ namespace TenCandles
             stats.lineSpacing = 1.25f;
             stats.rectTransform.Place(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(900f, 300f));
 
+            var menu = UIFactory.Button(panel, "Menu", skin.panelLight, () => GameManager.Instance.BackToMenu());
+            menu.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-260f, -270f), new Vector2(440f, 100f));
+            UIFactory.Label(menu.transform, "Label", "MAIN MENU  <size=26>[M]</size>", 38, TextAnchor.MiddleCenter, skin.text).rectTransform.Fill();
+
             var button = UIFactory.Button(panel, "Again", skin.panelLight, () => GameManager.Instance.Restart());
-            button.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -270f), new Vector2(480f, 100f));
+            button.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(260f, -270f), new Vector2(440f, 100f));
             UIFactory.AddOutline((Image)button.targetGraphic, skin.accent, 4f);
             var label = UIFactory.Label(button.transform, "Label", "PLAY AGAIN  <size=26>[R]</size>", 38, TextAnchor.MiddleCenter, skin.text, FontStyle.Bold);
             label.rectTransform.Fill();

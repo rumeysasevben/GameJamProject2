@@ -71,7 +71,7 @@ namespace TenCandles
 
         public float BuildCost(TowerData data) => HasFreeBuild ? 0f : Mathf.Round(data.baseCost * StatRegistry.BuildCostMultiplier);
 
-        public float UpgradeCost(Tower tower) => tower.IsMaxLevel ? 0f : Mathf.Round(tower.Data.UpgradeCost(tower.Level + 1));
+        public float UpgradeCost(Tower tower) => tower.IsMaxLevel ? 0f : Mathf.Round(tower.Data.UpgradeCost(tower.Level + 1) * StatRegistry.UpgradeCostMultiplier);
 
         public bool CanAfford(float cost) => cost <= 0f || CandleClock.Instance.CanAfford(cost);
 
@@ -159,7 +159,7 @@ namespace TenCandles
         void Update()
         {
             if (cam == null) cam = Camera.main;
-            bool active = CanBuildNow;
+            bool active = CanBuildNow && !TimeControl.IsMenuPaused;
 
             Vector3 mouse = cam.ScreenToWorldPoint(Input.mousePosition);
             mouse.z = 0f;
@@ -187,7 +187,6 @@ namespace TenCandles
                 else SelectType(i);
             }
 
-            if (Input.GetKeyDown(KeyCode.Escape)) ClearSelection();
             if (Input.GetKeyDown(KeyCode.U) && SelectedTower != null) TryUpgrade(SelectedTower);
         }
 

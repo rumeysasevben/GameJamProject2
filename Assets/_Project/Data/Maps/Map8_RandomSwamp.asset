@@ -18,6 +18,8 @@ MonoBehaviour:
   filler: {fileID: 21300000, guid: 834b28b268ba45741a3214160140e6fc, type: 3}
   cameraColor: {r: 0.08, g: 0.1, b: 0.05, a: 1}
   route: []
+  secondRoute: []
+  secondRouteFromYear: 4
   paintedSpots: []
   extraSpots: []
   props: []

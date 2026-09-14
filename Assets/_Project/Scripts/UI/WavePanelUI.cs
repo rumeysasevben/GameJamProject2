@@ -27,20 +27,20 @@ namespace TenCandles
             panel.anchorMax = new Vector2(1f, 1f);
             panel.pivot = new Vector2(1f, 1f);
             panel.anchoredPosition = new Vector2(0f, -HUD.TopBarHeight);
-            panel.sizeDelta = new Vector2(HUD.SidePanelWidth, 420f);
+            panel.sizeDelta = new Vector2(HUD.SidePanelWidth, 320f);
 
-            title = UIFactory.Label(panel, "Title", "", 26, TextAnchor.MiddleCenter, skin.accent, FontStyle.Bold);
-            title.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(230f, 40f));
+            title = UIFactory.Label(panel, "Title", "", 18, TextAnchor.MiddleCenter, skin.accent);
+            title.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(230f, 28f));
 
-            big = UIFactory.Label(panel, "Big", "", 76, TextAnchor.MiddleCenter, skin.text, FontStyle.Bold);
-            big.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(230f, 96f));
+            big = UIFactory.Label(panel, "Big", "", 48, TextAnchor.MiddleCenter, skin.text);
+            big.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(230f, 60f));
 
-            detail = UIFactory.Label(panel, "Detail", "", 21, TextAnchor.UpperCenter, skin.mutedText);
-            detail.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -160f), new Vector2(226f, 80f));
+            detail = UIFactory.Label(panel, "Detail", "", 15, TextAnchor.UpperCenter, skin.mutedText);
+            detail.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -104f), new Vector2(226f, 60f));
 
             // Who is coming next year, standing around idly.
             previewRow = UIFactory.Rect("NextWave", panel);
-            previewRow.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -158f), new Vector2(230f, 72f));
+            previewRow.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -102f), new Vector2(230f, 56f));
             for (int i = 0; i < MaxPreview; i++)
             {
                 var icon = UIFactory.Image(previewRow, "Enemy" + i, Color.white);
@@ -50,9 +50,9 @@ namespace TenCandles
             }
 
             early = UIFactory.Button(panel, "CallEarly", skin.panelLight, () => GameManager.Instance.CallWaveEarly());
-            early.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(222f, 130f));
+            early.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(222f, 96f));
             UIFactory.AddOutline((Image)early.targetGraphic, skin.accent, 3f);
-            earlyLabel = UIFactory.Label(early.transform, "Label", "", 24, TextAnchor.MiddleCenter, skin.text, FontStyle.Bold);
+            earlyLabel = UIFactory.Label(early.transform, "Label", "", 18, TextAnchor.MiddleCenter, skin.text);
             earlyLabel.rectTransform.Fill(8f, 8f, 8f, 8f);
         }
 
@@ -63,7 +63,7 @@ namespace TenCandles
                 previewYear = year;
                 previewTypes = waves.UpcomingTypes(year);
                 int n = Mathf.Min(previewTypes.Count, MaxPreview);
-                const float size = 64f, gap = 4f;
+                const float size = 50f, gap = 4f;
                 float start = -(n * size + (n - 1) * gap) * 0.5f + size * 0.5f;
                 for (int i = 0; i < previewIcons.Count; i++)
                 {
@@ -93,7 +93,7 @@ namespace TenCandles
             early.gameObject.SetActive(gm.State == GameState.Intermission);
             bool previewing = gm.State == GameState.Intermission;
             previewRow.gameObject.SetActive(previewing);
-            detail.rectTransform.anchoredPosition = new Vector2(0f, previewing ? -232f : -160f);
+            detail.rectTransform.anchoredPosition = new Vector2(0f, previewing ? -164f : -104f);
 
             switch (gm.State)
             {
@@ -108,7 +108,7 @@ namespace TenCandles
                     big.text = Mathf.CeilToInt(gm.IntermissionLeft).ToString();
                     detail.text = "Waiting burns your candles too.";
                     ShowPreview(waves, gm.Year);
-                    earlyLabel.text = $"CALL EARLY\n<size=18>[SPACE]</size>\n<color=#{ColorUtility.ToHtmlStringRGB(skin.good)}>+{gm.EarlyCallBonus:0.0} s</color>";
+                    earlyLabel.text = $"CALL EARLY\n<size=14>[SPACE]</size>\n<color=#{ColorUtility.ToHtmlStringRGB(skin.good)}>+{gm.EarlyCallBonus:0.0} s</color>";
                     break;
 
                 case GameState.Wave:

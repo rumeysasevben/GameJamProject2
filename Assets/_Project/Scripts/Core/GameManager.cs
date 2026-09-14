@@ -20,6 +20,10 @@ namespace TenCandles
         public float EarlyCallBonus => IntermissionLeft * earlyCallBonusFactor;
         public bool IsOver => State == GameState.Victory || State == GameState.Defeat;
 
+        // "Play again" skips the main menu; "Main menu" does not.
+        static bool skipMenuOnce;
+        int startedFrame = -1;
+
         void Awake()
         {
             Instance = this;
@@ -48,25 +52,33 @@ namespace TenCandles
             GameEvents.TimeRanOut -= OnTimeRanOut;
         }
 
-        void Start() => Enter(GameState.Boot);
+        void Start()
+        {
+            Enter(GameState.Boot);
+            if (skipMenuOnce)
+            {
+                skipMenuOnce = false;
+                StartGame();
+            }
+        }
 
         void Update()
         {
+            if (TimeControl.IsMenuPaused) return;
+
+            // Boot is the main menu; MainMenuUI starts the game.
             switch (State)
             {
-                case GameState.Boot:
-                    if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) StartGame();
-                    break;
-
                 case GameState.Intermission:
                     IntermissionLeft -= Time.deltaTime;
-                    if (Input.GetKeyDown(KeyCode.Space)) CallWaveEarly();
+                    if (Input.GetKeyDown(KeyCode.Space) && Time.frameCount != startedFrame) CallWaveEarly();
                     else if (IntermissionLeft <= 0f) StartWave();
                     break;
 
                 case GameState.Victory:
                 case GameState.Defeat:
                     if (Input.GetKeyDown(KeyCode.R)) Restart();
+                    else if (Input.GetKeyDown(KeyCode.M)) BackToMenu();
                     break;
             }
         }
@@ -74,6 +86,8 @@ namespace TenCandles
         public void StartGame()
         {
             if (State != GameState.Boot) return;
+            // The SPACE that pressed "Play" must not also call the first wave early.
+            startedFrame = Time.frameCount;
             Year = 1;
             BeginIntermission();
         }
@@ -88,6 +102,19 @@ namespace TenCandles
 
         public void Restart()
         {
+            skipMenuOnce = true;
+            Reload();
+        }
+
+        public void BackToMenu()
+        {
+            skipMenuOnce = false;
+            Reload();
+        }
+
+        static void Reload()
+        {
+            TimeControl.SetMenuPaused(false);
             Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
@@ -115,8 +142,15 @@ namespace TenCandles
                 return;
             }
 
+            // Gifts only come every few years; other years go straight to the next intermission.
+            var levelUp = LevelUpManager.Instance;
+            if (levelUp == null || !levelUp.IsOfferYear(year))
+            {
+                NextYear();
+                return;
+            }
             Enter(GameState.LevelUp);
-            if (!LevelUpManager.Instance.Offer(year)) NextYear();
+            if (!levelUp.Offer(year)) NextYear();
         }
 
         void OnUpgradeChosen(UpgradeCard card)

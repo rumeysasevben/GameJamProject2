@@ -7,14 +7,18 @@ namespace TenCandles
     public class EnemySpawner : MonoBehaviour
     {
         [SerializeField] PathRoute route;
+        [Tooltip("Optional. Used when WaveManager sends an enemy down the second road.")]
+        [SerializeField] PathRoute secondRoute;
         [SerializeField] Sprite squareSprite;
         [SerializeField] Sprite ringSprite;
 
         readonly Dictionary<EnemyData, ObjectPool<Enemy>> pools = new Dictionary<EnemyData, ObjectPool<Enemy>>();
 
         public PathRoute Route => route;
+        public PathRoute SecondRoute => secondRoute;
+        public bool HasSecondRoute => secondRoute != null && secondRoute.Count > 1;
 
-        public Enemy Spawn(EnemyData data, EnemyStats stats)
+        public Enemy Spawn(EnemyData data, EnemyStats stats, bool useSecondRoute = false)
         {
             if (!pools.TryGetValue(data, out var pool))
             {
@@ -23,7 +27,7 @@ namespace TenCandles
             }
 
             Enemy enemy = pool.Get();
-            enemy.Init(data, stats, route, pool.Release);
+            enemy.Init(data, stats, useSecondRoute && HasSecondRoute ? secondRoute : route, pool.Release);
             return enemy;
         }
 

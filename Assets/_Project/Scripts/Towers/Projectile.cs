@@ -132,6 +132,7 @@ namespace TenCandles
         void Apply(Enemy e, Enemy.DamageSource source)
         {
             if (hit.slowPercent > 0f) e.ApplySlow(hit.slowPercent, hit.slowDuration);
+            else if (StatRegistry.HitSlowPercent > 0f) e.ApplySlow(StatRegistry.HitSlowPercent, 1f);
             if (hit.burnDps > 0f) e.ApplyBurn(hit.burnDps, hit.burnDuration);
             e.Damage(hit.damage, hit.crit, source);
         }

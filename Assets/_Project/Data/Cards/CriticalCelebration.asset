@@ -17,5 +17,6 @@ MonoBehaviour:
   rarity: 1
   effect: 8
   value: 0.12
-  maxStacks: 2
+  kind: 0
+  maxStacks: 1
   icon: {fileID: 0}

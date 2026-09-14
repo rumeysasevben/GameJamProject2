@@ -19,6 +19,9 @@ namespace TenCandles
         public Sprite vignette;
         [Tooltip("Ring of four sign boards shown around an empty pad.")]
         public Sprite buildRing;
+        [Tooltip("Main menu art: the birthday host and the cake.")]
+        public Sprite hero;
+        public Sprite cake;
 
         // Charcoal panels with warm candle-light text: grey-black, never purple.
         [Header("Colours")]
@@ -31,8 +34,9 @@ namespace TenCandles
         public Color accent = new Color(1f, 0.8f, 0.3f);
         public Color danger = new Color(1f, 0.42f, 0.42f);
         public Color good = new Color(0.55f, 1f, 0.6f);
-        public Color common = new Color(0.4f, 0.75f, 1f);
-        public Color rare = new Color(1f, 0.62f, 0.25f);
+        public Color common = new Color(0.78f, 0.77f, 0.74f);
+        public Color rare = new Color(0.4f, 0.75f, 1f);
+        public Color legendary = new Color(1f, 0.74f, 0.2f);
         public Color disabled = new Color(0.27f, 0.27f, 0.27f, 0.95f);
         public Color flameColor = Color.white;
         public Color waxOut = new Color(0.45f, 0.44f, 0.42f);
@@ -53,6 +57,7 @@ namespace TenCandles
             good = defaults.good;
             common = defaults.common;
             rare = defaults.rare;
+            legendary = defaults.legendary;
             disabled = defaults.disabled;
             flameColor = defaults.flameColor;
             waxOut = defaults.waxOut;

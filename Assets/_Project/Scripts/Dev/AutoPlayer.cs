@@ -19,9 +19,10 @@ namespace TenCandles
 
         static readonly CardEffect[] CardPriority =
         {
-            CardEffect.Damage, CardEffect.FireRate, CardEffect.SplashRadius, CardEffect.Crit, CardEffect.ExtraCandle,
+            CardEffect.Blessing, CardEffect.ExtraCandle, CardEffect.SlowBurn, CardEffect.Damage, CardEffect.FireRate,
+            CardEffect.KindDamage, CardEffect.KindFireRate, CardEffect.SplashRadius, CardEffect.Crit, CardEffect.ArmorPierce, CardEffect.HitSlow,
             CardEffect.WaveEndBonus, CardEffect.LeakShield, CardEffect.FreeTower, CardEffect.Range, CardEffect.KillBonus,
-            CardEffect.LastBreath, CardEffect.Chain, CardEffect.BuildCost, CardEffect.Beeswax
+            CardEffect.LastBreath, CardEffect.UpgradeCost, CardEffect.InstantTime, CardEffect.Chain, CardEffect.BuildCost, CardEffect.BurnBoost, CardEffect.Beeswax
         };
 
         // Rough plan in the spirit of the GDD target build: (kind, nth tower of that kind, level).
@@ -112,20 +113,23 @@ namespace TenCandles
         // The empty pad that covers the most road within the tower's range.
         TowerSpot BestSpot(TowerData data)
         {
-            var route = FindAnyObjectByType<PathRoute>();
+            var spawner = FindAnyObjectByType<EnemySpawner>();
+            var routes = new List<PathRoute> { spawner.Route };
+            if (spawner.HasSecondRoute) routes.Add(spawner.SecondRoute);
             TowerSpot best = null;
             int bestScore = -1;
             foreach (var spot in FindObjectsByType<TowerSpot>(FindObjectsSortMode.None))
             {
                 if (!spot.IsEmpty) continue;
                 int score = 0;
-                for (int i = 0; i < route.Count - 1; i++)
-                {
-                    Vector3 a = route[i], b = route[i + 1];
-                    int samples = Mathf.CeilToInt(Vector3.Distance(a, b) / 0.25f);
-                    for (int s = 0; s <= samples; s++)
-                        if (Vector3.Distance(Vector3.Lerp(a, b, s / (float)samples), spot.transform.position) <= data.range) score++;
-                }
+                foreach (var route in routes)
+                    for (int i = 0; i < route.Count - 1; i++)
+                    {
+                        Vector3 a = route[i], b = route[i + 1];
+                        int samples = Mathf.CeilToInt(Vector3.Distance(a, b) / 0.25f);
+                        for (int s = 0; s <= samples; s++)
+                            if (Vector3.Distance(Vector3.Lerp(a, b, s / (float)samples), spot.transform.position) <= data.range) score++;
+                    }
                 if (score > bestScore)
                 {
                     bestScore = score;

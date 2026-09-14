@@ -6,14 +6,23 @@ namespace TenCandles
     public class TimeControl : MonoBehaviour
     {
         static bool paused;
+        static bool menuPaused;
         static float hitStopUntil;
         static float hitStopScale = 1f;
 
-        public static bool IsPaused => paused;
+        public static bool IsPaused => paused || menuPaused;
+        // The Esc pause menu. Separate from the level-up pause so closing one never unpauses the other.
+        public static bool IsMenuPaused => menuPaused;
 
         public static void SetPaused(bool value)
         {
             paused = value;
+            Apply();
+        }
+
+        public static void SetMenuPaused(bool value)
+        {
+            menuPaused = value;
             Apply();
         }
 
@@ -30,6 +39,7 @@ namespace TenCandles
         void Awake()
         {
             paused = false;
+            menuPaused = false;
             hitStopUntil = 0f;
             hitStopScale = 1f;
             Time.timeScale = 1f;
@@ -41,7 +51,7 @@ namespace TenCandles
 
         static void Apply()
         {
-            if (paused) Time.timeScale = 0f;
+            if (paused || menuPaused) Time.timeScale = 0f;
             else if (Time.unscaledTime < hitStopUntil) Time.timeScale = hitStopScale;
             else Time.timeScale = 1f;
         }

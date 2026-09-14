@@ -116,19 +116,23 @@ namespace TenCandles.EditorTools
                 Map(dataFolder, "Map1_Lava", "Lava Fields", 1, new Color(0.13f, 0.08f, 0.06f),
                     new[] { V(-60, 490), V(380, 490), V(530, 535), V(640, 560), V(820, 555), V(980, 555), V(1090, 610), V(1150, 720), V(1200, 840), V(1290, 910), V(1450, 925), V(1600, 935) },
                     new[] { V(420, 350), V(360, 645), V(920, 725), V(1190, 460), V(1380, 770) },
-                    new[] { V(610, 285), V(930, 425), V(1590, 790) }),
+                    new[] { V(610, 285), V(930, 425), V(1590, 790) },
+                    new[] { V(1385, -60), V(1385, 250), V(1380, 400), V(1340, 490), V(1260, 560), V(1150, 600), V(1090, 610), V(1150, 720), V(1200, 840), V(1290, 910), V(1450, 925), V(1600, 935) }),
                 Map(dataFolder, "Map2_Mine", "Crystal Mine", 2, new Color(0.12f, 0.07f, 0.04f),
                     new[] { V(-60, 370), V(90, 420), V(150, 560), V(250, 690), V(500, 715), V(1000, 715), V(1250, 745), V(1345, 840), V(1370, 1005) },
                     new[] { V(345, 580), V(325, 860), V(810, 860), V(1160, 860), V(1225, 540), V(1155, 210) },
-                    new[] { V(1560, 740) }),
+                    new[] { V(1560, 740) },
+                    new[] { V(1360, -60), V(1360, 120), V(1330, 230), V(1230, 300), V(1100, 350), V(1010, 450), V(960, 580), V(1000, 715), V(1250, 745), V(1345, 840), V(1370, 1005) }),
                 Map(dataFolder, "Map3_Snow", "Frozen Pass", 3, new Color(0.2f, 0.3f, 0.4f),
                     new[] { V(-60, 550), V(300, 555), V(560, 615), V(700, 720), V(730, 860), V(850, 945), V(1150, 960), V(1300, 1005) },
                     new[] { V(755, 545), V(1145, 570), V(500, 790), V(1385, 915) },
-                    new[] { V(400, 420), V(560, 1000) }),
+                    new[] { V(400, 420), V(560, 1000) },
+                    new[] { V(1980, 500), V(1700, 470), V(1450, 440), V(1260, 400), V(1120, 320), V(1000, 420), V(900, 560), V(780, 660), V(700, 720), V(730, 860), V(850, 945), V(1150, 960), V(1300, 1005) }),
                 Map(dataFolder, "Map4_Swamp", "Dead Swamp", 4, new Color(0.08f, 0.1f, 0.05f),
                     new[] { V(30, 1150), V(60, 900), V(140, 720), V(300, 640), V(1100, 640), V(1250, 625), V(1480, 640), V(1600, 700), V(1630, 850), V(1630, 1000) },
                     new[] { V(800, 460), V(360, 770), V(940, 770), V(1420, 770) },
-                    new[] { V(650, 780), V(1440, 470), V(470, 520) }),
+                    new[] { V(650, 780), V(1440, 470), V(470, 520) },
+                    new[] { V(650, -60), V(660, 100), V(730, 200), V(870, 290), V(960, 380), V(1030, 500), V(1100, 640), V(1250, 625), V(1480, 640), V(1600, 700), V(1630, 850), V(1630, 1000) }),
                 RandomMap(dataFolder, "Map5_RandomLava", "Random Lava Fields", 1, new Color(0.13f, 0.08f, 0.06f)),
                 RandomMap(dataFolder, "Map6_RandomMine", "Random Crystal Mine", 2, new Color(0.12f, 0.07f, 0.04f)),
                 RandomMap(dataFolder, "Map7_RandomSnow", "Random Frozen Pass", 3, new Color(0.2f, 0.3f, 0.4f)),
@@ -184,7 +188,7 @@ namespace TenCandles.EditorTools
 
         static Vector2 V(float x, float y) => new Vector2(x, y);
 
-        static MapData Map(string dataFolder, string file, string name, int image, Color cameraColor, Vector2[] route, Vector2[] painted, Vector2[] extra)
+        static MapData Map(string dataFolder, string file, string name, int image, Color cameraColor, Vector2[] route, Vector2[] painted, Vector2[] extra, Vector2[] secondRoute)
         {
             string path = $"{dataFolder}/Maps/{file}.asset";
             var map = AssetDatabase.LoadAssetAtPath<MapData>(path);
@@ -197,6 +201,8 @@ namespace TenCandles.EditorTools
             }
             // Layouts are traced from the art, not tuned by hand, so they are refreshed on every build.
             map.route = route;
+            map.secondRoute = secondRoute;
+            map.secondRouteFromYear = 4;
             map.paintedSpots = painted;
             map.extraSpots = extra;
             map.background = Sprite($"Maps/map{image}");

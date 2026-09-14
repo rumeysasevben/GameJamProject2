@@ -22,19 +22,19 @@ namespace TenCandles
             bar.sizeDelta = new Vector2(0f, HUD.TopBarHeight);
 
             var candles = UIFactory.Rect("Candles", bar);
-            candles.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(50f, -6f), new Vector2(900f, HUD.TopBarHeight));
+            candles.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(40f, -8f), new Vector2(1100f, HUD.TopBarHeight));
             // Shrunk as a whole so candle, flame and glow keep their proportions.
-            candles.localScale = Vector3.one * 0.78f;
+            candles.localScale = Vector3.one * 0.55f;
             candles.gameObject.AddComponent<CandleBarUI>().Build(candles);
 
-            year = UIFactory.Label(bar, "Year", "", 40, TextAnchor.MiddleRight, skin.text);
-            year.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-250f, 12f), new Vector2(460f, 60f));
+            year = UIFactory.Label(bar, "Year", "", 28, TextAnchor.MiddleRight, skin.text);
+            year.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-190f, 10f), new Vector2(360f, 40f));
 
-            clock = UIFactory.Label(bar, "Clock", "", 40, TextAnchor.MiddleRight, skin.accent);
-            clock.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40f, 12f), new Vector2(190f, 60f));
+            clock = UIFactory.Label(bar, "Clock", "", 28, TextAnchor.MiddleRight, skin.accent);
+            clock.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-30f, 10f), new Vector2(150f, 40f));
 
-            caption = UIFactory.Label(bar, "Caption", "", 17, TextAnchor.MiddleRight, skin.mutedText);
-            caption.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40f, -32f), new Vector2(700f, 28f));
+            caption = UIFactory.Label(bar, "Caption", "", 14, TextAnchor.MiddleRight, skin.mutedText);
+            caption.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-30f, -22f), new Vector2(700f, 22f));
         }
 
         void Update()

@@ -6,10 +6,13 @@ namespace TenCandles
     // Builds every screen-space UI element at startup.
     public class HUD : MonoBehaviour
     {
-        public const float TopBarHeight = 130f;
+        public const float TopBarHeight = 90f;
         public const float SidePanelWidth = 250f;
 
         [SerializeField] UISkin skin;
+
+        // The in-game panels; the main menu hides them so the title screen stays clean.
+        public static Canvas GameplayCanvas { get; private set; }
 
         // Start, not Awake: the panels read BuildManager and friends, which must exist first.
         void Start()
@@ -22,6 +25,7 @@ namespace TenCandles
             fx.gameObject.AddComponent<ScreenEffectsUI>().Build();
 
             var hud = UIFactory.Canvas("HUD Canvas", transform, 10);
+            GameplayCanvas = hud;
             var root = (RectTransform)hud.transform;
             root.gameObject.AddComponent<PopupsUI>().Build(root);
             root.gameObject.AddComponent<TopBarUI>().Build(root);
@@ -36,7 +40,8 @@ namespace TenCandles
             var overlay = UIFactory.Canvas("Overlay Canvas", transform, 20);
             var overlayRoot = (RectTransform)overlay.transform;
             overlayRoot.gameObject.AddComponent<LevelUpUI>().Build(overlayRoot);
-            overlayRoot.gameObject.AddComponent<StartScreenUI>().Build(overlayRoot);
+            overlayRoot.gameObject.AddComponent<MainMenuUI>().Build(overlayRoot);
+            overlayRoot.gameObject.AddComponent<PauseMenuUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<EndScreenUI>().Build(overlayRoot);
         }
 

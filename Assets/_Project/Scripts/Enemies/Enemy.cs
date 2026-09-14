@@ -127,7 +127,7 @@ namespace TenCandles
         {
             if (!IsTargetable || amount <= 0f) return;
 
-            if (source != DamageSource.Burn) amount = Mathf.Max(amount - Data.armor, amount > 0f ? 0.5f : 0f);
+            if (source != DamageSource.Burn && !StatRegistry.IgnoreArmor) amount = Mathf.Max(amount - Data.armor, amount > 0f ? 0.5f : 0f);
 
             float absorbed = Mathf.Min(Shield, amount);
             Shield -= absorbed;

@@ -10,10 +10,10 @@ namespace TenCandles
         public int Level { get; private set; } = 1;
 
         public float Range => Data.range * TowerData.RangeMultiplier(Level) * StatRegistry.RangeMultiplier;
-        public float Damage => Data.damage * TowerData.DamageMultiplier(Level) * StatRegistry.DamageMultiplier;
-        public float FireInterval => 1f / (Data.fireRate * StatRegistry.FireRateMultiplier);
+        public float Damage => Data.damage * TowerData.DamageMultiplier(Level) * StatRegistry.DamageFor(Data.kind);
+        public float FireInterval => 1f / (Data.fireRate * StatRegistry.FireRateFor(Data.kind));
         public float SplashRadius => Data.splashRadius * StatRegistry.SplashRadiusMultiplier;
-        public float BurnDps => Data.burnDps * TowerData.DamageMultiplier(Level) * StatRegistry.DamageMultiplier;
+        public float BurnDps => Data.burnDps * TowerData.DamageMultiplier(Level) * StatRegistry.DamageFor(Data.kind) * StatRegistry.BurnMultiplier;
         public float SlowPercent => Data.slowPercent > 0f ? Mathf.Clamp01(Data.slowPercent + StatRegistry.CandleSlowBonus) : 0f;
         public float Dps => Damage / FireInterval;
         public bool IsMaxLevel => Level >= TowerData.MaxLevel;

@@ -16,8 +16,9 @@ MonoBehaviour:
   description: 'You put one more candle on Farum''s cake.
 
     Break the ten.'
-  rarity: 1
+  rarity: 2
   effect: 7
-  value: 30
-  maxStacks: 2
+  value: 1
+  kind: 0
+  maxStacks: 1
   icon: {fileID: 0}

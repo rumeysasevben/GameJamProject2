@@ -51,6 +51,10 @@ namespace TenCandles
 
         [Tooltip("Road waypoints in order. The last one is where the cake stands.")]
         public Vector2[] route;
+        [Tooltip("Optional second road from another entrance. It joins the main road and ends at the same cake.")]
+        public Vector2[] secondRoute;
+        [Tooltip("From this year on, part of every wave takes the second road.")]
+        public int secondRouteFromYear = 4;
         [Tooltip("Tower pads already painted into the background.")]
         public Vector2[] paintedSpots;
         [Tooltip("Extra tower pads; padSprite is drawn under them.")]

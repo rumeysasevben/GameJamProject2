@@ -20,6 +20,7 @@ namespace TenCandles
         [SerializeField] SpriteRenderer background;
         [SerializeField] SpriteRenderer filler;
         [SerializeField] PathRoute route;
+        [SerializeField] PathRoute secondRoute;
         [SerializeField] Transform spotsRoot;
         [SerializeField] Transform propsRoot;
         [SerializeField] Transform party;
@@ -33,6 +34,8 @@ namespace TenCandles
         // The layout actually in play: the selected map, or the layout generated from it.
         public MapData Current { get; private set; }
         public bool IsGenerated => Selected != null && Selected.generated;
+        public bool HasSecondRoute => Current != null && Current.secondRoute != null && Current.secondRoute.Length > 1 && secondRoute != null;
+        public int SecondRouteFromYear => HasSecondRoute ? Current.secondRouteFromYear : int.MaxValue;
 
         public event Action MapChanged;
 
@@ -104,7 +107,8 @@ namespace TenCandles
             if (cam != null) cam.backgroundColor = Current.cameraColor;
 
             BuildProps(Current);
-            BuildRoute(Current);
+            BuildRoute(route, Current.route);
+            BuildRoute(secondRoute, Current.secondRoute);
             BuildSpots(Current);
 
             if (party != null && Current.route.Length > 1)
@@ -146,17 +150,18 @@ namespace TenCandles
             }
         }
 
-        void BuildRoute(MapData map)
+        static void BuildRoute(PathRoute target, Vector2[] points)
         {
-            if (route == null) return;
-            Clear(route.transform);
-            for (int i = 0; i < map.route.Length; i++)
-            {
-                var wp = new GameObject("Waypoint" + i);
-                wp.transform.SetParent(route.transform, false);
-                wp.transform.position = MapData.ToWorld(map.route[i]);
-            }
-            route.Recache();
+            if (target == null) return;
+            Clear(target.transform);
+            if (points != null)
+                for (int i = 0; i < points.Length; i++)
+                {
+                    var wp = new GameObject("Waypoint" + i);
+                    wp.transform.SetParent(target.transform, false);
+                    wp.transform.position = MapData.ToWorld(points[i]);
+                }
+            target.Recache();
         }
 
         void BuildSpots(MapData map)

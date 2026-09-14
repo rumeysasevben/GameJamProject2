@@ -23,9 +23,9 @@ namespace TenCandles
         [SerializeField] int countPerYear = 2;
 
         [Header("hp(n) = base * (1 + linear(n-1)) * exp^(n-1)")]
-        [SerializeField] float hpBase = 12f;
+        [SerializeField] float hpBase = 10.5f;
         [SerializeField] float hpLinear = 0.42f;
-        [Tooltip("GDD value is 1.13. Autoplay (Sept 2026, buffed towers): 12 / 0.42 / 1.12 with reward 2.1 + 0.25n wins with cards (~140 s left), reaches year 9 without.")]
+        [Tooltip("GDD value is 1.13. Autoplay (Sept 2026): 10.5 / 0.42 / 1.12 with reward 2.6 + 0.25n, gifts every 2 years and second roads: wins with cards (60-145 s left), loses in year 10 without.")]
         [SerializeField] float hpExponent = 1.12f;
 
         [Header("speed(n) = base + perYear(n-1), times world scale")]
@@ -36,7 +36,7 @@ namespace TenCandles
 
         [Header("reward(n) = base + perYear * n")]
         [Tooltip("GDD value is 1.3, which the autoplay bot could not win even with cards. 2.1 keeps a careful player out of time trouble.")]
-        [SerializeField] float rewardBase = 2.1f;
+        [SerializeField] float rewardBase = 2.6f;
         [SerializeField] float rewardPerYear = 0.25f;
 
         [Header("gap(n) = max(min, base - perYear * n)")]
@@ -108,12 +108,33 @@ namespace TenCandles
 
                 RemainingToSpawn--;
                 Alive++;
-                spawner.Spawn(lineup[i], stats);
+                spawner.Spawn(lineup[i], stats, TakesSecondRoad(year, i, lineup[i]));
 
                 if (i < lineup.Count - 1) yield return new WaitForSeconds(gap);
             }
             spawning = null;
             CheckCleared();
+        }
+
+        // Maps with two entrances open the second road part-way through the game:
+        // a third of each wave uses it at first, half of it two years later. The boss always takes the main road.
+        public bool SecondRoadActive(int year)
+        {
+            var maps = MapLoader.Instance;
+            return spawner.HasSecondRoute && maps != null && year >= maps.SecondRouteFromYear;
+        }
+
+        public bool SecondRoadOpensThisYear(int year)
+        {
+            var maps = MapLoader.Instance;
+            return spawner.HasSecondRoute && maps != null && year == maps.SecondRouteFromYear;
+        }
+
+        bool TakesSecondRoad(int year, int index, EnemyData data)
+        {
+            if (data == boss || !SecondRoadActive(year)) return false;
+            int every = year < MapLoader.Instance.SecondRouteFromYear + 2 ? 3 : 2;
+            return index % every == every - 1;
         }
 
         List<(EnemyData data, float weight)> Weights(int year)

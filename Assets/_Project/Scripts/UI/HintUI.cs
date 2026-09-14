@@ -42,6 +42,11 @@ namespace TenCandles
             }
 
             label.color = skin.text;
+            if (!GameSettings.Hints)
+            {
+                label.text = "";
+                return;
+            }
             var gm = GameManager.Instance;
             var build = BuildManager.Instance;
             if (gm == null || build == null)

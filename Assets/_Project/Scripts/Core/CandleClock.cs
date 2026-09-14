@@ -40,7 +40,7 @@ namespace TenCandles
 
         void Update()
         {
-            if (IsDraining) SetTime(TimeRemaining - drainRate * Time.deltaTime);
+            if (IsDraining) SetTime(TimeRemaining - drainRate * StatRegistry.DrainMultiplier * Time.deltaTime);
         }
 
         // Kill rewards, early-call bonus, card bonuses. Anything above MaxTime is lost.

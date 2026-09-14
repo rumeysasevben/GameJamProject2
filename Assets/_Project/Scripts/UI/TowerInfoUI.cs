@@ -21,21 +21,21 @@ namespace TenCandles
             panel.anchorMax = new Vector2(1f, 0f);
             panel.pivot = new Vector2(1f, 0f);
             panel.anchoredPosition = Vector2.zero;
-            panel.sizeDelta = new Vector2(HUD.SidePanelWidth, 440f);
+            panel.sizeDelta = new Vector2(HUD.SidePanelWidth, 330f);
 
-            title = UIFactory.Label(panel, "Title", "", 28, TextAnchor.MiddleCenter, skin.accent, FontStyle.Bold);
-            title.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(230f, 70f));
+            title = UIFactory.Label(panel, "Title", "", 20, TextAnchor.MiddleCenter, skin.accent);
+            title.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(230f, 52f));
 
-            stats = UIFactory.Label(panel, "Stats", "", 21, TextAnchor.UpperLeft, skin.text);
-            stats.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -96f), new Vector2(214f, 180f));
+            stats = UIFactory.Label(panel, "Stats", "", 16, TextAnchor.UpperLeft, skin.text);
+            stats.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(214f, 150f));
 
             upgrade = UIFactory.Button(panel, "Upgrade", skin.panelLight, () =>
             {
                 var b = BuildManager.Instance;
                 if (b != null && b.SelectedTower != null) b.TryUpgrade(b.SelectedTower);
             });
-            upgrade.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(222f, 110f));
-            upgradeLabel = UIFactory.Label(upgrade.transform, "Label", "", 24, TextAnchor.MiddleCenter, skin.text, FontStyle.Bold);
+            upgrade.GetComponent<RectTransform>().Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(222f, 80f));
+            upgradeLabel = UIFactory.Label(upgrade.transform, "Label", "", 18, TextAnchor.MiddleCenter, skin.text);
             upgradeLabel.rectTransform.Fill(6f, 6f, 6f, 6f);
         }
 
@@ -48,7 +48,7 @@ namespace TenCandles
             panel.gameObject.SetActive(t != null);
             if (t == null) return;
 
-            title.text = $"{t.Data.displayName}\n<size=20>Level {t.Level} / {TowerData.MaxLevel}</size>";
+            title.text = $"{t.Data.displayName}\n<size=15>Level {t.Level} / {TowerData.MaxLevel}</size>";
 
             string extra = "";
             if (t.SplashRadius > 0f) extra += $"\nSplash  {t.SplashRadius:0.0}";

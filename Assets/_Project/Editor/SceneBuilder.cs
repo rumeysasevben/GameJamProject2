@@ -44,6 +44,15 @@ namespace TenCandles.EditorTools
 
         public static void Build()
         {
+            // Card and story text is formatted here; "0.5 s", not "0,5 s", whatever the editor's system language is.
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            try { BuildInternal(); }
+            finally { System.Globalization.CultureInfo.CurrentCulture = culture; }
+        }
+
+        static void BuildInternal()
+        {
             if (!CraftpixArt.Available) throw new InvalidOperationException($"Art is missing: expected {CraftpixArt.Folder}/Maps");
 
             Directory.CreateDirectory(DataFolder + "/Towers");
@@ -147,22 +156,36 @@ namespace TenCandles.EditorTools
                 e.sprite = art.balloon; e.tint = new Color(0.95f, 0.3f, 0.85f); e.size = 1.4f;
             });
 
+            // Every card is one per game. Stats, rarity and text are rewritten on each build (see Card()).
             d.cards = new[]
             {
-                Card("Bonfire", CardRarity.Common, CardEffect.Damage, 0.15f, 4, "All towers deal +15% damage."),
-                Card("Quick Hands", CardRarity.Common, CardEffect.FireRate, 0.12f, 3, "All towers fire 12% faster."),
-                Card("Long Fuse", CardRarity.Common, CardEffect.Range, 0.15f, 2, "All towers reach 15% further."),
-                Card("Tip Jar", CardRarity.Common, CardEffect.KillBonus, 0.4f, 3, "Every defeat gives +0.4 s more."),
-                Card("Bulk Buy", CardRarity.Common, CardEffect.BuildCost, 0.2f, 2, "New towers cost 20% less."),
-                Card("Anniversary", CardRarity.Common, CardEffect.WaveEndBonus, 12f, 3, "+12 s at the end of every year."),
-                Card("Sturdy Door", CardRarity.Common, CardEffect.LeakShield, 15f, 1, "A leak costs 15 s instead of a whole candle."),
-                Card("The Eleventh Candle", CardRarity.Rare, CardEffect.ExtraCandle, 30f, 2, "Put one more candle on the cake.\nBreak the ten."),
-                Card("Critical Celebration", CardRarity.Rare, CardEffect.Crit, 0.12f, 2, "Shots get a 12% chance to deal 2.5Ã— damage."),
-                Card("Chain Reaction", CardRarity.Rare, CardEffect.Chain, 1f, 1, "Stone Thrower shots bounce to a second enemy."),
-                Card("Big Bang", CardRarity.Rare, CardEffect.SplashRadius, 0.35f, 2, "Splash radius +35%."),
-                Card("Beeswax", CardRarity.Rare, CardEffect.Beeswax, 0.2f, 1, "Fire Brazier slows by 45% instead of 25%."),
-                Card("Free Gift", CardRarity.Rare, CardEffect.FreeTower, 1f, 2, "Your next tower costs nothing."),
-                Card("Last Breath", CardRarity.Rare, CardEffect.LastBreath, 45f, 1, "When only one candle is left, get +45 s. Once."),
+                Card("Bonfire", CardRarity.Common, CardEffect.Damage, 0.15f),
+                Card("Quick Hands", CardRarity.Common, CardEffect.FireRate, 0.12f),
+                Card("Long Fuse", CardRarity.Common, CardEffect.Range, 0.15f),
+                Card("Tip Jar", CardRarity.Common, CardEffect.KillBonus, 0.5f),
+                Card("Bulk Buy", CardRarity.Common, CardEffect.BuildCost, 0.2f),
+                Card("Anniversary", CardRarity.Common, CardEffect.WaveEndBonus, 12f),
+                Card("Sturdy Door", CardRarity.Common, CardEffect.LeakShield, 15f),
+                Card("Stone Mason", CardRarity.Common, CardEffect.KindDamage, 0.3f, TowerKind.Confetti),
+                Card("Heavy Rocks", CardRarity.Common, CardEffect.KindDamage, 0.3f, TowerKind.Cake),
+                Card("Hot Coals", CardRarity.Common, CardEffect.BurnBoost, 0.5f),
+                Card("Master Builder", CardRarity.Common, CardEffect.UpgradeCost, 0.25f),
+                Card("Spare Wax", CardRarity.Common, CardEffect.InstantTime, 25f),
+                Card("Critical Celebration", CardRarity.Rare, CardEffect.Crit, 0.12f),
+                Card("Chain Reaction", CardRarity.Rare, CardEffect.Chain, 1f),
+                Card("Big Bang", CardRarity.Rare, CardEffect.SplashRadius, 0.35f),
+                Card("Beeswax", CardRarity.Rare, CardEffect.Beeswax, 0.2f),
+                Card("Free Gift", CardRarity.Rare, CardEffect.FreeTower, 1f),
+                Card("Last Breath", CardRarity.Rare, CardEffect.LastBreath, 45f),
+                Card("Double Tap", CardRarity.Rare, CardEffect.KindFireRate, 0.35f, TowerKind.Confetti),
+                Card("Mortar Crew", CardRarity.Rare, CardEffect.KindFireRate, 0.35f, TowerKind.Firework),
+                Card("Cold Snap", CardRarity.Rare, CardEffect.HitSlow, 0.15f),
+                Card("Armor Breaker", CardRarity.Rare, CardEffect.ArmorPierce, 1f),
+                Card("The Eleventh Candle", CardRarity.Legendary, CardEffect.ExtraCandle, 1f),
+                Card("Birthday Wish", CardRarity.Legendary, CardEffect.ExtraCandle, 2f),
+                Card("Farum's Blessing", CardRarity.Legendary, CardEffect.Blessing, 0.35f),
+                Card("Slow-Burning Wax", CardRarity.Legendary, CardEffect.SlowBurn, 0.3f),
+                Card("Meteor Mortar", CardRarity.Legendary, CardEffect.KindDamage, 0.8f, TowerKind.Firework),
             };
 
             d.eras = new[]
@@ -230,6 +253,8 @@ namespace TenCandles.EditorTools
             d.skin.flame = CraftpixArt.Sprite("Party/candle_flame");
             d.skin.flameColor = Color.white;
             d.skin.buildRing = CraftpixArt.Sprite("UI/build_ring");
+            d.skin.hero = CraftpixArt.Sprite("Party/farum");
+            d.skin.cake = CraftpixArt.Sprite("Party/birthday_cake");
             // Black Ops One is wide, so every size comes down a little to fit the panels.
             d.skin.font = AssetDatabase.LoadAssetAtPath<Font>(Root + "/Art/Fonts/BlackOpsOne-Regular.ttf");
             d.skin.fontScale = d.skin.font != null ? 0.88f : 1f;
@@ -245,15 +270,6 @@ namespace TenCandles.EditorTools
                 EditorUtility.SetDirty(d.eras[i]);
             }
 
-            // Gifts speak to the player.
-            foreach (var c in d.cards)
-            {
-                string pct = $"{c.value * 100f:0}%";
-                string text = CardText(c, pct);
-                if (text == null) continue;
-                c.description = text;
-                EditorUtility.SetDirty(c);
-            }
         }
 
         static string CardText(UpgradeCard c, string pct)
@@ -267,13 +283,24 @@ namespace TenCandles.EditorTools
                 case CardEffect.BuildCost: return $"New towers cost you {pct} less.";
                 case CardEffect.WaveEndBonus: return $"You get +{c.value:0} s at the end of every year.";
                 case CardEffect.LeakShield: return $"A monster that reaches the cake costs you {c.value:0} s instead of a whole candle.";
-                case CardEffect.ExtraCandle: return $"You put one more candle on {Story.HeroPossessive} cake.\nBreak the ten.";
+                case CardEffect.ExtraCandle: return c.value >= 2f
+                    ? $"You put {c.value:0} more candles on {Story.HeroPossessive} cake, lit and ready."
+                    : $"You put one more candle on {Story.HeroPossessive} cake.\nBreak the ten.";
                 case CardEffect.Crit: return $"Your shots get a {pct} chance to deal 2.5× damage.";
                 case CardEffect.Chain: return "Your Stone Thrower shots bounce to a second monster.";
                 case CardEffect.SplashRadius: return $"Your splash damage reaches {pct} wider.";
                 case CardEffect.Beeswax: return "Your Fire Brazier slows monsters by 45% instead of 25%.";
                 case CardEffect.FreeTower: return "Your next tower costs you nothing.";
                 case CardEffect.LastBreath: return $"When you are down to your last candle, you get +{c.value:0} s. Once.";
+                case CardEffect.KindDamage: return $"Your {KindName(c.kind)} towers deal {pct} more damage.";
+                case CardEffect.KindFireRate: return $"Your {KindName(c.kind)} towers fire {pct} faster.";
+                case CardEffect.BurnBoost: return $"Your Fire Brazier flames burn {pct} hotter.";
+                case CardEffect.UpgradeCost: return $"Upgrades cost you {pct} less.";
+                case CardEffect.InstantTime: return $"You get +{c.value:0} s right now.";
+                case CardEffect.HitSlow: return $"Every hit slows monsters by {pct} for a moment.";
+                case CardEffect.ArmorPierce: return "Your shots ignore the armor of Brutes.";
+                case CardEffect.Blessing: return $"{Story.Hero} blesses your towers: {pct} more damage and {c.value * 50f:0}% faster shots.";
+                case CardEffect.SlowBurn: return $"Your candles burn {pct} slower for the rest of the game.";
                 default: return null;
             }
         }
@@ -301,6 +328,14 @@ namespace TenCandles.EditorTools
             foreach (var e in new[] { d.balloon, d.runner, d.giftBox, d.lantern, d.boss }) EditorUtility.SetDirty(e);
         }
 
+        static string KindName(TowerKind kind) => kind switch
+        {
+            TowerKind.Confetti => "Stone Thrower",
+            TowerKind.Candle => "Fire Brazier",
+            TowerKind.Cake => "Catapult",
+            _ => "Spike Mortar"
+        };
+
         static ProjectileLook Shot(string sprite, float size, bool spin = false, bool face = false) =>
             new ProjectileLook { sprite = CraftpixArt.Sprite("Projectiles/" + sprite), size = size, spin = spin, faceTravel = face };
 
@@ -326,12 +361,19 @@ namespace TenCandles.EditorTools
             EditorUtility.SetDirty(e);
         }
 
-        static UpgradeCard Card(string title, CardRarity rarity, CardEffect effect, float value, int max, string description)
+        static UpgradeCard Card(string title, CardRarity rarity, CardEffect effect, float value, TowerKind kind = TowerKind.Confetti)
         {
-            return Asset<UpgradeCard>("Cards/" + title.Replace(" ", ""), c =>
-            {
-                c.title = title; c.rarity = rarity; c.effect = effect; c.value = value; c.maxStacks = max; c.description = description;
-            });
+            string file = new string(Array.FindAll(title.ToCharArray(), char.IsLetterOrDigit));
+            var card = Asset<UpgradeCard>("Cards/" + file, c => { });
+            card.title = title;
+            card.rarity = rarity;
+            card.effect = effect;
+            card.value = value;
+            card.kind = kind;
+            card.maxStacks = 1;
+            card.description = CardText(card, $"{value * 100f:0}%") ?? card.description;
+            EditorUtility.SetDirty(card);
+            return card;
         }
 
         static EraData Era(string file, string name, Color tint, float confetti, int layers, float ambient, bool fireworks)
@@ -374,6 +416,7 @@ namespace TenCandles.EditorTools
             // World. MapLoader fills in the background sprite, waypoints and pads at runtime.
             var background = Sprite("Background", null, firstMap.background, data.eras[0].backgroundTint, -100);
             var path = new GameObject("Path").AddComponent<PathRoute>();
+            var secondPath = new GameObject("SecondPath").AddComponent<PathRoute>();
             var spots = new GameObject("TowerSpots");
 
             var filler = Sprite("Filler", null, firstMap.filler, Color.white, -110);
@@ -400,6 +443,7 @@ namespace TenCandles.EditorTools
             Set(maps, "filler", filler);
             Set(maps, "propsRoot", props.transform);
             Set(maps, "route", path);
+            Set(maps, "secondRoute", secondPath);
             Set(maps, "spotsRoot", spots.transform);
             Set(maps, "party", party.transform);
             Set(maps, "highlightSprite", art.pad);
@@ -417,6 +461,7 @@ namespace TenCandles.EditorTools
             var waves = systems.AddComponent<WaveManager>();
             var spawner = Child<EnemySpawner>(systems, "Enemies");
             Set(spawner, "route", path);
+            Set(spawner, "secondRoute", secondPath);
             Set(spawner, "squareSprite", art.square);
             // A soft blue glow reads as a magic shield on the painted enemies; the thin ring did not.
             Set(spawner, "ringSprite", art.soft);

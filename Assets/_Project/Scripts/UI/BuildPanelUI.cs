@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace TenCandles
 {
-    // Left panel: one button per tower, priced in seconds.
+    // Left drawer: one button per tower, priced in seconds. Starts closed; the arrow tab (or TAB) slides it in and out.
     public class BuildPanelUI : MonoBehaviour
     {
         class Entry
@@ -18,9 +18,16 @@ namespace TenCandles
             public Image icon;
         }
 
+        const float SlideSeconds = 0.18f;
+
         readonly List<Entry> entries = new List<Entry>();
         Text description;
         UISkin skin;
+        RectTransform panel;
+        Text arrow;
+        bool open;
+        float shown; // 0 closed .. 1 open
+        TowerData lastSelected;
 
         public void Build(RectTransform root)
         {
@@ -28,7 +35,7 @@ namespace TenCandles
             var build = BuildManager.Instance;
             if (build == null) return;
 
-            var panel = UIFactory.Panel(root, "BuildPanel", skin.panelColor).rectTransform;
+            panel = UIFactory.Panel(root, "BuildPanel", skin.panelColor).rectTransform;
             panel.anchorMin = new Vector2(0f, 0f);
             panel.anchorMax = new Vector2(0f, 1f);
             panel.pivot = new Vector2(0f, 0.5f);
@@ -70,13 +77,48 @@ namespace TenCandles
             description = UIFactory.Label(panel, "Description", "", 15, TextAnchor.UpperLeft, skin.mutedText);
             description.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -60f - build.Towers.Length * (height + gap)), new Vector2(214f, 220f));
+
+            // The tab sticks out of the drawer's right edge, so it slides along with it.
+            var tab = UIFactory.Button(panel, "Tab", skin.panelColor, Toggle);
+            tab.GetComponent<RectTransform>().Place(new Vector2(1f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 60f), new Vector2(46f, 120f));
+            UIFactory.AddOutline((Image)tab.targetGraphic, skin.accent, 2f);
+            arrow = UIFactory.Label(tab.transform, "Arrow", ">", 34, TextAnchor.MiddleCenter, skin.accent);
+            arrow.rectTransform.Fill();
+            var tabKey = UIFactory.Label(tab.transform, "Key", "TAB", 11, TextAnchor.LowerCenter, skin.mutedText);
+            tabKey.rectTransform.Fill(0f, 6f, 0f, 0f);
+
+            SetOffset(0f);
+        }
+
+        public void Toggle() => open = !open;
+
+        void SetOffset(float t)
+        {
+            float x = -HUD.SidePanelWidth * (1f - t);
+            panel.offsetMin = new Vector2(x, 0f);
+            panel.offsetMax = new Vector2(x + HUD.SidePanelWidth, -HUD.TopBarHeight);
         }
 
         void Update()
         {
             var build = BuildManager.Instance;
-            if (build == null || skin == null) return;
+            if (build == null || skin == null || panel == null) return;
             bool canBuild = build.CanBuildNow;
+
+            if (Input.GetKeyDown(KeyCode.Tab) && !TimeControl.IsMenuPaused) Toggle();
+            // Picking a tower with 1-4 opens the drawer so you can see what you picked.
+            if (build.SelectedType != lastSelected)
+            {
+                if (build.SelectedType != null) open = true;
+                lastSelected = build.SelectedType;
+            }
+            float target = open ? 1f : 0f;
+            if (!Mathf.Approximately(shown, target))
+            {
+                shown = Mathf.MoveTowards(shown, target, Time.unscaledDeltaTime / SlideSeconds);
+                SetOffset(Mathf.SmoothStep(0f, 1f, shown));
+            }
+            arrow.text = open ? "<" : ">";
 
             foreach (var e in entries)
             {

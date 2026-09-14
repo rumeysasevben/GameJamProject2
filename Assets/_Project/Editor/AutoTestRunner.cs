@@ -58,6 +58,13 @@ namespace TenCandles.EditorTools
                 EditorApplication.update += Watchdog;
 
                 Time.captureDeltaTime = StepSeconds;
+                if (Environment.GetCommandLineArgs().Contains("-menuShots"))
+                {
+                    menuStep = 0;
+                    EditorApplication.update -= Watchdog;
+                    EditorApplication.update += MenuShots;
+                    return;
+                }
                 ApplyOverrides();
                 var bot = new GameObject("AutoPlayer").AddComponent<AutoPlayer>();
                 bot.useCards = SessionState.GetBool(CardsKey, true);
@@ -111,15 +118,86 @@ namespace TenCandles.EditorTools
         }
 
         static bool shotTaken;
+        static int menuStep;
 
-        // -shot=<seconds>: saves Logs/autoplay_shot.png (world + HUD) once game time passes that mark.
+        // -bot.shot=<seconds>: saves Logs/autoplay_shot.png (world + HUD) once game time passes that mark.
         static void MaybeScreenshot()
         {
             if (shotTaken) return;
             float at = ArgFloat("shot", -1f);
             if (at < 0f || Time.timeSinceLevelLoad < at || Camera.main == null) return;
             shotTaken = true;
+            Capture("Logs/autoplay_shot.png");
+        }
 
+        // -menuShots: screenshots of every main menu page and the pause menu, then quits.
+        static void MenuShots()
+        {
+            if (!EditorApplication.isPlaying || Camera.main == null) return;
+            float t = Time.timeSinceLevelLoad;
+            var menu = UnityEngine.Object.FindAnyObjectByType<MainMenuUI>();
+            var pause = UnityEngine.Object.FindAnyObjectByType<PauseMenuUI>();
+            if (menu == null) return;
+
+            string[] pages = { "Main", "Maps", "HowTo", "Settings" };
+            if (menuStep < pages.Length && t > 1f + menuStep)
+            {
+                ShowMenuPage(menu, pages[menuStep]);
+                // Give the UI a frame to lay out before capturing.
+                if (t > 1.5f + menuStep)
+                {
+                    Capture($"Logs/menu_{pages[menuStep].ToLowerInvariant()}.png");
+                    menuStep++;
+                }
+            }
+            else if (menuStep == pages.Length && t > 6f)
+            {
+                ShowMenuPage(menu, "Main");
+                GameManager.Instance.StartGame();
+                pause.GetType().GetMethod("SetOpen", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(pause, new object[] { true });
+                menuStep = pages.Length + 1;
+            }
+            // Game time is frozen from here on (pause, level-up), so these steps count editor updates.
+            else if (menuStep > pages.Length)
+            {
+                int frame = ++menuStep - pages.Length;
+                if (frame == 8)
+                {
+                    Capture("Logs/menu_pause.png");
+                    pause.GetType().GetMethod("SetOpen", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(pause, new object[] { false });
+                    UnityEngine.Object.FindAnyObjectByType<BuildPanelUI>().Toggle();
+                }
+                else if (frame == 240)
+                {
+                    Capture("Logs/menu_hud_drawer_open.png");
+                    UnityEngine.Object.FindAnyObjectByType<BuildPanelUI>().Toggle();
+                }
+                else if (frame == 270)
+                {
+                    Capture("Logs/menu_hud_drawer_closed.png");
+                    TimeControl.SetPaused(true);
+                    // Year 7 unlocks every rarity and guarantees at least one Rare or Legendary.
+                    LevelUpManager.Instance.Offer(7);
+                }
+                else if (frame == 300)
+                {
+                    Capture("Logs/menu_cards.png");
+                    EditorApplication.update -= MenuShots;
+                    if (Application.isBatchMode) EditorApplication.Exit(errorCount > 0 ? 2 : 0);
+                    else EditorApplication.ExitPlaymode();
+                }
+            }
+        }
+
+        static void ShowMenuPage(MainMenuUI menu, string page)
+        {
+            var pageType = typeof(MainMenuUI).GetNestedType("Page", System.Reflection.BindingFlags.NonPublic);
+            typeof(MainMenuUI).GetMethod("Show", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(menu, new[] { Enum.Parse(pageType, page) });
+        }
+
+        static void Capture(string path)
+        {
             var cam = Camera.main;
             var canvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
             foreach (var c in canvases)
@@ -138,7 +216,7 @@ namespace TenCandles.EditorTools
             tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
             tex.Apply();
             Directory.CreateDirectory("Logs");
-            File.WriteAllBytes("Logs/autoplay_shot.png", tex.EncodeToPNG());
+            File.WriteAllBytes(path, tex.EncodeToPNG());
             RenderTexture.active = null;
             cam.targetTexture = null;
             foreach (var c in canvases) c.renderMode = RenderMode.ScreenSpaceOverlay;

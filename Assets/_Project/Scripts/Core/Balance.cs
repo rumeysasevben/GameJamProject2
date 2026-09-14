@@ -19,8 +19,19 @@ namespace TenCandles.Core
         public const int MaxVisitsPerStage   = 2;       // legality rule for Stay
         public const float StayHpMultiplier  = 1.30f;   // +30% enemy HP when Stay chosen
 
-        // Candle cap per stage index 0..3
-        public static readonly int[] StageCandleCap = { 10, 10, 9, 7 };
+        // Candle cap per tier index 0..3 (the run's 1st..4th decade, NOT the biome).
+        // Indexed by RunState.CurrentTier so Stay cannot dodge ageing.
+        public static readonly int[] TierCandleCap = { 10, 10, 9, 7 };
+        // Lanes the map may use per tier index 0..3. Active lanes = min(map entrance count, TierLaneAllowance[CurrentTier]).
+        public static readonly int[] TierLaneAllowance = { 1, 2, 2, 2 };
+        // In the decade a lane first opens, its share of each wave ramps from Start (year 1) to End (year 10); End after that.
+        public const float NewLaneShareStart = 0.25f;
+        public const float NewLaneShareEnd   = 0.50f;
+
+        // Mastery passives, granted by Stay with the mastery tower and kept for the rest of the run (§5.1).
+        public const int   LongSummerCandles       = 1;      // Childhood: MaxCandlesAdd
+        public const float BoundlessEnergyFireRate = 0.15f;  // Youth: TowerFireRateMul
+        public const float SavingsKillReward       = 0.20f;  // Adulthood: KillRewardMul
 
         // ---------- Wave scaling ----------
         // d = stage index 0..3 (difficulty tier, NOT which biome)
@@ -42,7 +53,7 @@ namespace TenCandles.Core
         public const float GapMinimum      = 0.42f;
 
         // ---------- Age-derived ----------
-        public const int TowerCapacityBase = 2;
+        public const int TowerCapacityBase = 3;       // invariant: capacity >= 2 × active lanes (§7)
         public const int TowerCapacityPerAge = 8;       // capacity = Base + age / PerAge
 
         // ---------- Tower upgrades ----------
@@ -74,9 +85,8 @@ namespace TenCandles.Core
         public const int MemoryPerWish       = 5;
         public const int HardYearsMaxTier    = 15;
 
-        // ---------- Balance harness (not in spec §2; added for Phase 1) ----------
-        // Seconds an enemy spends on the road after its spawn slot, used by BalanceSimulator for
-        // "Duration = Count × Gap + walk". Reproduces the §8 Duration column.
+        // ---------- Balance harness ----------
+        // Seconds on the road after an enemy's spawn slot: Duration = Count × Gap + SimWalkSeconds (§8).
         public const float SimWalkSeconds = 7f;
     }
 }

@@ -20,6 +20,9 @@ namespace TenCandles
         public float EarlyCallBonus => IntermissionLeft * Balance.EarlyCallBonusMul;
         public bool IsOver => State == GameState.Victory || State == GameState.Defeat;
 
+        // Fixes the run seed (card draws, wave shuffles) for balance testing. Null: a new seed every run.
+        public static int? SeedOverride;
+
         // "Play again" skips the main menu; "Main menu" does not.
         static bool skipMenuOnce;
         int startedFrame = -1;
@@ -91,7 +94,7 @@ namespace TenCandles
             if (State != GameState.Boot) return;
             // The SPACE that pressed "Play" must not also call the first wave early.
             startedFrame = Time.frameCount;
-            Lifetime.BeginRun(System.Environment.TickCount);
+            Lifetime.BeginRun(SeedOverride ?? System.Environment.TickCount);
             BeginIntermission();
         }
 
@@ -103,11 +106,12 @@ namespace TenCandles
             StartWave();
         }
 
-        // Phase 1: the birthday screen only advances to the next stage.
+        // Stay or Advance (spec §5). An illegal choice is ignored; the birthday screen shows why it is disabled.
         public void ChooseBirthday(BirthdayChoice choice)
         {
-            if (State != GameState.Birthday || choice != BirthdayChoice.Advance) return;
-            Lifetime.ResolveBirthday(choice);
+            if (State != GameState.Birthday) return;
+            var build = BuildManager.Instance;
+            if (!Lifetime.ResolveBirthday(choice, build != null ? build.Catalogue : null)) return;
             // The key that closed the birthday screen must not also call the next wave early.
             startedFrame = Time.frameCount;
             NextYear();
@@ -180,7 +184,8 @@ namespace TenCandles
                 return;
             }
             Enter(GameState.Birthday);
-            GameEvents.RaiseBirthdayOffered(false, true);
+            BirthdayOptions options = Lifetime.OfferBirthday();
+            GameEvents.RaiseBirthdayOffered(options.StayLegal, options.AdvanceLegal);
         }
 
         void NextYear()

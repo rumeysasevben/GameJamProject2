@@ -1,3 +1,4 @@
+using TenCandles.Lifetime;
 using UnityEngine;
 
 namespace TenCandles
@@ -31,9 +32,18 @@ namespace TenCandles
         static readonly float[] LevelCost = { 1f, 0.75f, 1.5f };
         static readonly float[] LevelRange = { 1f, 1.1f, 1.2f };
 
+        [Tooltip("snake_case, unique. Referenced by RunState.Masteries and save data.")]
+        public string id;
         public string displayName = "Tower";
         public TowerKind kind;
         [TextArea] public string description;
+
+        [Header("Unlock (spec §9.1)")]
+        public UnlockSource unlock = UnlockSource.Starting;
+        [Tooltip("Ignored when unlock is Starting.")]
+        public DecadeStage unlockStage;
+
+        public TowerUnlock Unlock => new TowerUnlock(string.IsNullOrEmpty(id) ? name : id, unlock, unlockStage);
 
         [Header("Stats")]
         public float baseCost = 20f;

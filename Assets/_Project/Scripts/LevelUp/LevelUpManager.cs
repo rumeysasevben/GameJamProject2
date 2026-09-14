@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TenCandles.Lifetime;
 using UnityEngine;
 
 namespace TenCandles
@@ -93,7 +94,7 @@ namespace TenCandles
                 if (filter == null || filter(c)) total += Weight(c);
             if (total <= 0f) return false;
 
-            float roll = Random.value * total;
+            float roll = (float)LifetimeManager.RunRandom.NextDouble() * total;
             int chosen = -1;
             for (int i = 0; i < candidates.Count; i++)
             {

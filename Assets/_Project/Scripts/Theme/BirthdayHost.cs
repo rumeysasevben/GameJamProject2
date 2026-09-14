@@ -114,7 +114,7 @@ namespace TenCandles
         void OnWaveStarted(int year)
         {
             if (WaveGenerator.YearOfAge(year) == Balance.YearsPerDecade) Say("That's the Orc Warlord! You have to stop it!", 3f);
-            else if (WaveManager.Instance != null && WaveManager.Instance.SecondRoadOpensThisYear(year)) Say("They're coming down the other road too! Watch both sides!", 3.5f);
+            else if (WaveManager.Instance != null && WaveManager.Instance.LaneOpensThisYear(year)) Say("They're coming down the other road too! Watch both sides!", 3.5f);
         }
 
         void OnGameOver(bool victory)

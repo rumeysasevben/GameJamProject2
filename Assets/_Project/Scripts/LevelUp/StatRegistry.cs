@@ -13,6 +13,7 @@ namespace TenCandles
         public static float BuildCostMultiplier;
         public static float UpgradeCostMultiplier;
         public static float KillBonus;
+        public static float KillRewardMultiplier;
         public static float WaveEndBonus;
         public static float LeakPenaltyReduction;
         public static float CritChance;
@@ -43,6 +44,7 @@ namespace TenCandles
             BuildCostMultiplier = 1f;
             UpgradeCostMultiplier = 1f;
             KillBonus = 0f;
+            KillRewardMultiplier = 1f;
             WaveEndBonus = 0f;
             LeakPenaltyReduction = 0f;
             CritChance = 0f;

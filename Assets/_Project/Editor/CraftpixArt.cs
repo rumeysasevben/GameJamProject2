@@ -202,7 +202,6 @@ namespace TenCandles.EditorTools
             // Layouts are traced from the art, not tuned by hand, so they are refreshed on every build.
             map.route = route;
             map.secondRoute = secondRoute;
-            map.secondRouteFromYear = 4;
             map.paintedSpots = painted;
             map.extraSpots = extra;
             map.background = Sprite($"Maps/map{image}");

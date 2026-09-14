@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using TenCandles.Core;
+using TenCandles.Lifetime;
 using TenCandles.Waves;
 using UnityEditor;
 using UnityEngine;
@@ -190,7 +191,7 @@ namespace TenCandles.EditorTools
             Check("Sawtooth (peak → dip → new peak)", sawOk, string.Join(", ", saw));
 
             // 4. No single upgrade step above the smallest stage wallet.
-            float cap = Balance.StageCandleCap.Min() * Balance.SecondsPerCandle;
+            float cap = Balance.TierCandleCap.Min() * Balance.SecondsPerCandle;
             float topStep = Balance.LevelCostMultiplier[Balance.MaxTowerLevel];
             var towerList = towers.ToList();
             var offenders = towerList.Where(t => t.baseCost * topStep > cap).Select(t => $"{t.name} L{Balance.MaxTowerLevel} = {t.baseCost * topStep:0} s").ToList();
@@ -206,6 +207,24 @@ namespace TenCandles.EditorTools
             float drain = runSeconds * Balance.DrainRatePerSecond;
             float ratio = income / drain;
             Check("Kill income / drain 2.5-3.5×", ratio >= MinIncomeRatio && ratio <= MaxIncomeRatio, string.Format(culture, "{0:0} s / {1:0} s = {2:0.00}×", income, drain, ratio));
+
+            // 7. Multi-lane invariant (§7): capacity ≥ 2 × active lanes at every age, using the tier's full lane allowance.
+            var laneFailures = new List<string>();
+            int tightestSlack = int.MaxValue;
+            string tightest = "";
+            for (int age = 1; age <= Balance.TotalYears; age++)
+            {
+                int tier = WaveGenerator.TierOfAge(age);
+                int capacity = LifetimeManager.TowerCapacityFor(age);
+                int needed = 2 * Balance.TierLaneAllowance[tier];
+                if (capacity < needed) laneFailures.Add($"age {age}: {capacity} towers < 2 × {Balance.TierLaneAllowance[tier]} lanes");
+                if (capacity - needed < tightestSlack)
+                {
+                    tightestSlack = capacity - needed;
+                    tightest = $"tightest at age {age}: {capacity} towers for {Balance.TierLaneAllowance[tier]} lanes";
+                }
+            }
+            Check("Tower capacity ≥ 2 × active lanes", laneFailures.Count == 0, laneFailures.Count == 0 ? $"ages 1-{Balance.TotalYears} checked, {tightest}" : string.Join(", ", laneFailures));
 
             sb.AppendLine();
             sb.AppendLine(allOk ? "RESULT: all checks passed" : "RESULT: some checks FAILED");

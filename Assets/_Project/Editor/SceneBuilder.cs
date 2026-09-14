@@ -98,7 +98,7 @@ namespace TenCandles.EditorTools
             {
                 Asset<TowerData>("Towers/ConfettiCannon", t =>
                 {
-                    t.displayName = "Confetti Cannon"; t.kind = TowerKind.Confetti;
+                    t.id = "confetti_cannon"; t.displayName = "Confetti Cannon"; t.kind = TowerKind.Confetti;
                     t.description = "Cheap and quick. Hits one guest at a time.";
                     t.baseCost = 20; t.damage = 3.5f; t.fireRate = 1.8f; t.range = 2.5f;
                     t.icon = art.cannon; t.tint = new Color(1f, 0.55f, 0.72f); t.size = 0.9f;
@@ -106,7 +106,7 @@ namespace TenCandles.EditorTools
                 }),
                 Asset<TowerData>("Towers/CandleTower", t =>
                 {
-                    t.displayName = "Candle Tower"; t.kind = TowerKind.Candle;
+                    t.id = "candle_tower"; t.displayName = "Candle Tower"; t.kind = TowerKind.Candle;
                     t.description = "Weak hits, but burns and slows. Keeps guests inside a Firework's blast.";
                     t.baseCost = 30; t.damage = 2f; t.fireRate = 1f; t.range = 2.2f;
                     t.burnDps = 3f; t.burnDuration = 2f; t.slowPercent = 0.25f; t.slowDuration = 1.5f;
@@ -115,7 +115,7 @@ namespace TenCandles.EditorTools
                 }),
                 Asset<TowerData>("Towers/CakeCatapult", t =>
                 {
-                    t.displayName = "Cake Catapult"; t.kind = TowerKind.Cake;
+                    t.id = "cake_catapult"; t.displayName = "Cake Catapult"; t.kind = TowerKind.Cake;
                     t.description = "Lobs cake that splashes a small group.";
                     t.baseCost = 40; t.damage = 10f; t.fireRate = 0.6f; t.range = 3f; t.splashRadius = 1.2f;
                     t.icon = art.cake; t.tint = new Color(1f, 0.75f, 0.85f); t.size = 0.95f;
@@ -123,7 +123,7 @@ namespace TenCandles.EditorTools
                 }),
                 Asset<TowerData>("Towers/Firework", t =>
                 {
-                    t.displayName = "Firework"; t.kind = TowerKind.Firework;
+                    t.id = "firework_launcher"; t.displayName = "Firework"; t.kind = TowerKind.Firework;
                     t.description = "Slow, long reach, huge blast. The late-game backbone.";
                     t.baseCost = 55; t.damage = 26f; t.fireRate = 0.3f; t.range = 4.2f; t.splashRadius = 2f;
                     t.icon = art.rocket; t.tint = new Color(1f, 0.45f, 0.4f); t.size = 0.95f;

@@ -34,7 +34,8 @@ namespace TenCandles
         HitSlow,        // Cold Snap
         ArmorPierce,    // Armor Breaker
         Blessing,       // Farum's Blessing: damage and fire rate
-        SlowBurn        // Slow-Burning Wax: candles drain slower
+        SlowBurn,       // Slow-Burning Wax: candles drain slower
+        KillRewardMul   // multiplies the time every kill gives (spec: UpgradeEffectType.KillRewardMul)
     }
 
     [CreateAssetMenu(menuName = "Ten Candles/Upgrade Card", fileName = "Card")]

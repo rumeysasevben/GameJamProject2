@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TenCandles.Lifetime;
+using TenCandles.Waves;
 using UnityEngine;
 
 namespace TenCandles
@@ -13,6 +14,8 @@ namespace TenCandles
         public bool useCards = true;
         public float reserveSeconds = 40f;
         public bool avoidExtraCandles;
+        // Birthday choices, one letter per birthday: "SAS" = Stay, Advance, Stay.
+        public string life;
         public System.Action<bool, string> Finished;
         // Set by AutoTestRunner with -bot.shots; receives a file tag.
         public System.Action<string> Snapshot;
@@ -20,6 +23,7 @@ namespace TenCandles
         const int BirthdayHoldFrames = 6;
         const int StageShotFrames = 30;
         int birthdayFrames, stageShotIn;
+        bool laneShotTaken;
 
         readonly StringBuilder report = new StringBuilder();
         int leaksThisYear, leaksTotal;
@@ -107,13 +111,31 @@ namespace TenCandles
                 birthdayFrames = 0;
                 stageShotIn = StageShotFrames;
                 var slot = gm.Lifetime.CurrentSlot;
-                report.AppendLine($"    birthday at {gm.Age}: leaving {slot.Stage} (tier {slot.TierIndex})");
-                gm.ChooseBirthday(BirthdayChoice.Advance);
+                // -bot.life=SAS: the Stay / Advance sequence to play. Advance when not given or not legal.
+                int birthday = gm.Lifetime.Run.Choices.Count;
+                BirthdayChoice choice = life != null && birthday < life.Length && life[birthday] == 'S' ? BirthdayChoice.Stay : BirthdayChoice.Advance;
+                var options = gm.Lifetime.Options;
+                report.AppendLine($"    birthday at {gm.Age} in {slot.Stage}: stay {(options.StayLegal ? "legal" : "illegal (" + options.StayBlockedReason + ")")}, advance {(options.AdvanceLegal ? "legal" : "illegal (" + options.AdvanceBlockedReason + ")")}");
+                if (!options.IsLegal(choice))
+                {
+                    report.AppendLine($"    wanted {choice}, which is illegal: advancing instead");
+                    choice = BirthdayChoice.Advance;
+                }
+                gm.ChooseBirthday(choice);
                 slot = gm.Lifetime.CurrentSlot;
-                report.AppendLine($"    entering {slot.Stage} (tier {slot.TierIndex}, ages {slot.AgeFrom}-{slot.AgeTo}), candle cap {CandleClock.Instance.CandleCap}");
+                report.AppendLine($"    chose {choice}: {slot.Stage} (tier {slot.TierIndex}, ages {slot.AgeFrom}-{slot.AgeTo}, repeat {slot.IsRepeat}), candle cap {CandleClock.Instance.CandleCap}, masteries [{string.Join(", ", gm.Lifetime.Run.Masteries)}], passives [{string.Join(", ", BirthdayController.Passives(gm.Lifetime.Run).Select(p => p.Name))}]");
                 return;
             }
             if (gm.State != GameState.Intermission && gm.State != GameState.Wave) return;
+
+            // The wave where a second lane first opens, once most of it is on the roads.
+            var waves = WaveManager.Instance;
+            if (Snapshot != null && !laneShotTaken && gm.State == GameState.Wave && waves.LaneOpensThisYear(gm.Age)
+                && waves.SpawnedPerLane.Sum() >= WaveGenerator.Count(WaveGenerator.TierOfAge(gm.Age), WaveGenerator.YearOfAge(gm.Age)) - 3)
+            {
+                laneShotTaken = true;
+                Snapshot($"lanes_age{gm.Age}");
+            }
 
             thinkTimer -= Time.deltaTime;
             if (thinkTimer > 0f) return;
@@ -163,7 +185,8 @@ namespace TenCandles
             if (spawner.HasSecondRoute) routes.Add(spawner.SecondRoute);
             TowerSpot best = null;
             int bestScore = -1;
-            foreach (var spot in FindObjectsByType<TowerSpot>(FindObjectsSortMode.None))
+            // Fixed pad order, so ties resolve the same way every run (same seed, same build).
+            foreach (var spot in FindObjectsByType<TowerSpot>(FindObjectsSortMode.None).OrderBy(s => s.transform.position.x).ThenBy(s => s.transform.position.y))
             {
                 if (!spot.IsEmpty) continue;
                 int score = 0;
@@ -221,10 +244,10 @@ namespace TenCandles
         {
             var towers = FindObjectsByType<Tower>(FindObjectsSortMode.None);
             float dps = towers.Sum(t => t.Dps);
-            string build = string.Join(" ", towers.OrderBy(t => t.Data.kind).Select(t => $"{Code(t.Data.kind)}{t.Level}"));
+            string build = string.Join(" ", towers.OrderBy(t => t.Data.kind).ThenBy(t => built.IndexOf(t)).Select(t => $"{Code(t.Data.kind)}{t.Level}"));
             var bm = BuildManager.Instance;
             var clock = CandleClock.Instance;
-            report.AppendLine($"Age {year,2} cleared | time {clock.TimeRemaining,6:0.0}s | candles {clock.CandleCap,2} | towers {bm.TowersBuilt}/{bm.TowerCapacity} | kills +{killIncome,5:0.0}s | leaks {leaksThisYear} | raw DPS {dps,6:0.0} | {build}");
+            report.AppendLine($"Age {year,2} cleared | time {clock.TimeRemaining,6:0.0}s | candles {clock.CandleCap,2} | towers {bm.TowersBuilt}/{bm.TowerCapacity} | lanes {string.Join("/", WaveManager.Instance.SpawnedPerLane)} | kills +{killIncome,5:0.0}s | leaks {leaksThisYear} | raw DPS {dps,6:0.0} | {build}");
             leaksThisYear = 0;
             killIncome = 0f;
         }
@@ -245,8 +268,8 @@ namespace TenCandles
         {
             var gm = GameManager.Instance;
             report.AppendLine(victory
-                ? $"VICTORY with {CandleClock.Instance.TimeRemaining:0.0}s left, {leaksTotal} leaks, game time {Time.timeSinceLevelLoad:0}s"
-                : $"DEFEAT at age {gm.Age} ({leaksTotal} leaks, {WaveManager.Instance.Remaining} guests still coming), game time {Time.timeSinceLevelLoad:0}s");
+                ? $"VICTORY with {CandleClock.Instance.TimeRemaining:0.0}s left, {leaksTotal} leaks, game time {Time.timeSinceLevelLoad:0}s, life {BirthdayController.Code(gm.Lifetime.Run.Choices)} = {BirthdayController.LifeName(gm.Lifetime.Run.Choices)}, stages [{string.Join(", ", gm.Lifetime.Run.Slots.Select(s => s.Stage))}], masteries [{string.Join(", ", gm.Lifetime.Run.Masteries)}], passives [{string.Join(", ", BirthdayController.Passives(gm.Lifetime.Run).Select(p => p.Name))}], seed {gm.Lifetime.Run.Seed}, kill reward ×{StatRegistry.KillRewardMultiplier:0.00}, fire rate ×{StatRegistry.FireRateMultiplier:0.00}"
+                : $"DEFEAT at age {gm.Age} ({leaksTotal} leaks, {WaveManager.Instance.Remaining} guests still coming), game time {Time.timeSinceLevelLoad:0}s, life so far {BirthdayController.Code(gm.Lifetime.Run.Choices)}, seed {gm.Lifetime.Run.Seed}");
             if (!victory)
             {
                 report.AppendLine($"    state before defeat: {previousState}, wave running {WaveManager.Instance.IsRunning}, alive counter {WaveManager.Instance.Alive}, timeScale {Time.timeScale}, dt {Time.deltaTime}, birthday hold frame {birthdayFrames}");

@@ -27,6 +27,10 @@ namespace TenCandles.Core
         public int   WishesMade;
         public int   HardYearsTier;
         public int   Seed;
+        // The only source of run randomness (card draws, wave shuffles). Seeded from Seed by BirthdayController.NewRun.
+        [NonSerialized] public System.Random Rng;
+        // Combat rolls (crits) get their own stream so shot counts never shift card offers or wave order.
+        [NonSerialized] public System.Random CombatRng;
 
         public DecadeSlot CurrentSlot => Slots[Math.Clamp(CurrentTier, 0, Slots.Length - 1)];
     }

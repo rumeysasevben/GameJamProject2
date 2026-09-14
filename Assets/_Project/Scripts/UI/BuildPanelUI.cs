@@ -129,10 +129,11 @@ namespace TenCandles
             foreach (var e in entries)
             {
                 float cost = build.BuildCost(e.data);
-                bool affordable = build.CanAfford(cost) && !full;
+                bool locked = !build.IsUnlocked(e.data);
+                bool affordable = build.CanAfford(cost) && !full && !locked;
                 bool selected = build.SelectedType == e.data;
 
-                e.cost.text = cost <= 0f ? "FREE" : $"{cost:0} s";
+                e.cost.text = locked ? "LOCKED" : cost <= 0f ? "FREE" : $"{cost:0} s";
                 e.cost.color = affordable ? (cost <= 0f ? skin.good : skin.accent) : skin.danger;
                 e.background.color = affordable && canBuild ? skin.panelLight : skin.disabled;
                 e.icon.color = affordable ? e.data.tint : new Color(0.5f, 0.5f, 0.5f, 0.8f);
@@ -143,6 +144,8 @@ namespace TenCandles
             TowerData focus = build.SelectedType;
             if (full && canBuild)
                 description.text = $"You have all the towers you can have at age {GameManager.Instance.Age}. One more at age {LifetimeManager.NextCapacityAge(GameManager.Instance.Age)}.\nUpgrade the ones you have.";
+            else if (focus != null && !build.IsUnlocked(focus))
+                description.text = $"<b>{focus.displayName}</b> is locked.\n{BuildManager.LockReason(focus)}";
             else if (focus != null)
                 description.text = $"<b>{focus.displayName}</b>\n{focus.description}\n\nClick a glowing pad to build it.";
             else if (build.SelectedTower == null && canBuild)

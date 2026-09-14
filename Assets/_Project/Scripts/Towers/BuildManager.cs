@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using TenCandles.Lifetime;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -74,6 +76,16 @@ namespace TenCandles
         public int TowerCapacity => LifetimeManager.Instance != null && LifetimeManager.Instance.Run != null ? LifetimeManager.Instance.TowerCapacity : int.MaxValue;
         public bool AtTowerCapacity => TowersBuilt >= TowerCapacity;
 
+        // Every tower's unlock rule, for birthday grants (spec §5.1).
+        public IEnumerable<TowerUnlock> Catalogue => towers.Where(t => t != null).Select(t => t.Unlock);
+
+        // Starting towers, plus visit and mastery towers this run has earned. Nothing is locked before a run starts.
+        public bool IsUnlocked(TowerData data)
+        {
+            var lifetime = LifetimeManager.Instance;
+            return data != null && (lifetime == null || lifetime.Run == null || BirthdayController.IsUnlocked(lifetime.Run, data.Unlock));
+        }
+
         public float BuildCost(TowerData data) => HasFreeBuild ? 0f : Mathf.Round(data.baseCost * StatRegistry.BuildCostMultiplier);
 
         public float UpgradeCost(Tower tower) => tower.IsMaxLevel ? 0f : Mathf.Round(tower.Data.UpgradeCost(tower.Level + 1) * StatRegistry.UpgradeCostMultiplier);
@@ -122,6 +134,11 @@ namespace TenCandles
         public bool TryBuild(TowerData data, TowerSpot spot)
         {
             if (!CanBuildNow || spot == null || !spot.IsEmpty) return false;
+            if (!IsUnlocked(data))
+            {
+                GameEvents.RaiseBuildFailed($"{data.displayName} is locked. {LockReason(data)}");
+                return false;
+            }
             if (AtTowerCapacity)
             {
                 int age = LifetimeManager.Instance.Age;
@@ -149,6 +166,10 @@ namespace TenCandles
             SelectTower(tower);
             return true;
         }
+
+        public static string LockReason(TowerData data) => data.unlock == UnlockSource.StageMastery
+            ? $"Stay in {data.unlockStage.Display()} for a second decade to earn it."
+            : $"Reach {data.unlockStage.Display()} to unlock it.";
 
         public bool TryUpgrade(Tower tower)
         {

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TenCandles.Core;
+using TenCandles.Lifetime;
 using TenCandles.Waves;
 using UnityEngine;
 
@@ -69,14 +70,18 @@ namespace TenCandles
         IEnumerator Spawn(int age, List<EnemyData> lineup)
         {
             int d = WaveGenerator.TierOfAge(age), y = WaveGenerator.YearOfAge(age);
+            var slot = LifetimeManager.Instance != null && LifetimeManager.Instance.Run != null ? LifetimeManager.Instance.Run.Slots[d] : null;
             var stats = new EnemyStats
             {
-                hp = WaveGenerator.Hp(d, y),
+                hp = WaveGenerator.Hp(d, y, slot != null && slot.IsRepeat),
                 speed = WaveGenerator.Speed(d, y) * worldSpeedScale,
                 reward = WaveGenerator.Reward(d, y)
             };
             float gap = WaveGenerator.Gap(d, y);
             int breakAt = y == Balance.YearsPerDecade - 1 ? lineup.Count / 2 : -1;
+            float[] shares = LaneShares = WaveGenerator.LaneShares(spawner.LaneCount, d, y);
+            var regularPerLane = new int[shares.Length];
+            SpawnedPerLane = new int[shares.Length];
 
             for (int i = 0; i < lineup.Count; i++)
             {
@@ -84,7 +89,11 @@ namespace TenCandles
 
                 RemainingToSpawn--;
                 Alive++;
-                spawner.Spawn(lineup[i], stats, TakesSecondRoad(age, i, lineup[i]));
+                // Regular enemies follow the lane shares (the new lane eases in); the boss always takes the first lane.
+                int lane = lineup[i] == boss ? 0 : WaveGenerator.PickLane(shares, regularPerLane);
+                if (lineup[i] != boss) regularPerLane[lane]++;
+                SpawnedPerLane[lane]++;
+                spawner.Spawn(lineup[i], stats, lane);
 
                 if (i < lineup.Count - 1) yield return new WaitForSeconds(gap);
             }
@@ -92,26 +101,15 @@ namespace TenCandles
             CheckCleared();
         }
 
-        // Maps with two entrances open the second road part-way through the game:
-        // a third of each wave uses it at first, half of it two years later. The boss always takes the main road.
-        public bool SecondRoadActive(int age)
-        {
-            var maps = MapLoader.Instance;
-            return spawner.HasSecondRoute && maps != null && age >= maps.SecondRouteFromYear;
-        }
+        // Spec §7 / §12.2: min(map entrances, the tier's lane allowance). Tier-indexed, so Stay does not delay it.
+        public int ActiveLanes(int age) => WaveGenerator.ActiveLanes(spawner.LaneCount, WaveGenerator.TierOfAge(age));
 
-        public bool SecondRoadOpensThisYear(int age)
-        {
-            var maps = MapLoader.Instance;
-            return spawner.HasSecondRoute && maps != null && age == maps.SecondRouteFromYear;
-        }
+        // The current wave: planned share per lane, and how many enemies each lane has been sent so far.
+        public float[] LaneShares { get; private set; } = { 1f };
+        public int[] SpawnedPerLane { get; private set; } = new int[1];
 
-        bool TakesSecondRoad(int age, int index, EnemyData data)
-        {
-            if (data == boss || !SecondRoadActive(age)) return false;
-            int every = age < MapLoader.Instance.SecondRouteFromYear + 2 ? 3 : 2;
-            return index % every == every - 1;
-        }
+        // True for the first age at which a map's extra lane is used.
+        public bool LaneOpensThisYear(int age) => age > 1 && ActiveLanes(age) > ActiveLanes(age - 1);
 
         // The mix follows the year within the decade, so every decade opens gently again.
         List<(EnemyData data, float weight)> Weights(int yearInDecade)
@@ -158,10 +156,11 @@ namespace TenCandles
                 assigned += n;
             }
 
-            // Shuffle, but never open a wave with a tank or support unit.
+            // Shuffle with the run's seeded RNG, but never open a wave with a tank or support unit.
+            System.Random rng = LifetimeManager.RunRandom;
             for (int i = lineup.Count - 1; i > 0; i--)
             {
-                int j = Random.Range(0, i + 1);
+                int j = rng.Next(0, i + 1);
                 (lineup[i], lineup[j]) = (lineup[j], lineup[i]);
             }
             int firstBalloon = lineup.IndexOf(balloon);

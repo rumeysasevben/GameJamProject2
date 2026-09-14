@@ -66,10 +66,14 @@ namespace TenCandles.EditorTools
                     return;
                 }
                 ApplyOverrides();
+                // -seed=N fixes the run seed (card draws, wave shuffles) so balance changes can be compared run to run.
+                string seedArg = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("-seed="));
+                GameManager.SeedOverride = seedArg != null ? int.Parse(seedArg.Substring("-seed=".Length), System.Globalization.CultureInfo.InvariantCulture) : (int?)null;
                 var bot = new GameObject("AutoPlayer").AddComponent<AutoPlayer>();
                 bot.useCards = SessionState.GetBool(CardsKey, true);
                 bot.reserveSeconds = ArgFloat("reserve", bot.reserveSeconds);
                 bot.avoidExtraCandles = Environment.GetCommandLineArgs().Contains("-bot.noExtraCandles");
+                bot.life = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("-bot.life="))?.Substring("-bot.life=".Length).ToUpperInvariant();
                 bot.Finished = (victory, report) => Finish(victory, report);
                 // -bot.shots: Logs/autoplay_birthday_<age>.png and Logs/autoplay_stage<tier>_<stage>.png
                 if (Environment.GetCommandLineArgs().Contains("-bot.shots")) bot.Snapshot = tag => Capture($"Logs/autoplay_{tag}.png");

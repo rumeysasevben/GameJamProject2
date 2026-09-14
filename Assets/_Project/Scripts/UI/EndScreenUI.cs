@@ -1,4 +1,5 @@
 using System.Collections;
+using TenCandles.Lifetime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -82,7 +83,11 @@ namespace TenCandles
             {
                 title.text = $"HAPPY BIRTHDAY, {Story.Hero.ToUpperInvariant()}!";
                 title.color = skin.accent;
-                subtitle.text = $"You kept {Story.HeroPossessive} candles burning for a whole lifetime. The cake is safe.";
+                var run = gm.Lifetime != null ? gm.Lifetime.Run : null;
+                string life = run != null ? BirthdayController.LifeName(run.Choices) : null;
+                subtitle.text = life != null
+                    ? $"You kept {Story.HeroPossessive} candles burning for a whole lifetime: {life}. The cake is safe."
+                    : $"You kept {Story.HeroPossessive} candles burning for a whole lifetime. The cake is safe.";
             }
             else
             {

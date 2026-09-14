@@ -7,7 +7,7 @@ namespace TenCandles
     public class EnemySpawner : MonoBehaviour
     {
         [SerializeField] PathRoute route;
-        [Tooltip("Optional. Used when WaveManager sends an enemy down the second road.")]
+        [Tooltip("Optional second entrance. Used once WaveManager opens a second lane.")]
         [SerializeField] PathRoute secondRoute;
         [SerializeField] Sprite squareSprite;
         [SerializeField] Sprite ringSprite;
@@ -17,8 +17,10 @@ namespace TenCandles
         public PathRoute Route => route;
         public PathRoute SecondRoute => secondRoute;
         public bool HasSecondRoute => secondRoute != null && secondRoute.Count > 1;
+        // Map entrances. WaveManager decides how many are in use (spec §12.2).
+        public int LaneCount => HasSecondRoute ? 2 : 1;
 
-        public Enemy Spawn(EnemyData data, EnemyStats stats, bool useSecondRoute = false)
+        public Enemy Spawn(EnemyData data, EnemyStats stats, int lane = 0)
         {
             if (!pools.TryGetValue(data, out var pool))
             {
@@ -27,7 +29,7 @@ namespace TenCandles
             }
 
             Enemy enemy = pool.Get();
-            enemy.Init(data, stats, useSecondRoute && HasSecondRoute ? secondRoute : route, pool.Release);
+            enemy.Init(data, stats, lane > 0 && HasSecondRoute ? secondRoute : route, pool.Release);
             return enemy;
         }
 

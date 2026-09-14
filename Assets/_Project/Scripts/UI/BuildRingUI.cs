@@ -103,8 +103,9 @@ namespace TenCandles
             foreach (var s in slots)
             {
                 float cost = build.BuildCost(s.data);
-                bool affordable = build.CanAfford(cost) && !full;
-                s.cost.text = full ? "FULL" : cost <= 0f ? "FREE" : $"{cost:0}s";
+                bool locked = !build.IsUnlocked(s.data);
+                bool affordable = build.CanAfford(cost) && !full && !locked;
+                s.cost.text = locked ? "LOCKED" : full ? "FULL" : cost <= 0f ? "FREE" : $"{cost:0}s";
                 s.cost.color = !affordable ? skin.danger : cost <= 0f ? skin.good : skin.accent;
                 s.icon.color = affordable ? Color.white : new Color(0.45f, 0.45f, 0.45f, 0.9f);
 

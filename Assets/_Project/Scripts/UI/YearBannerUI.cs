@@ -75,8 +75,8 @@ namespace TenCandles
             if (currentYear == 1) subtitle.text = $"{Story.HeroPossessive} birthday is coming. Guard the cake!";
             else if (currentYear >= Balance.TotalYears) subtitle.text = "The Orc Warlord is coming. This is your last stand.";
             else if (yearInDecade == Balance.YearsPerDecade) subtitle.text = "The Orc Warlord is coming. Hold on until the birthday!";
-            else if (yearInDecade == 1 && slot != null) subtitle.text = $"{slot.Stage.Display()} begins: ages {slot.AgeFrom}-{slot.AgeTo}";
-            else if (WaveManager.Instance != null && WaveManager.Instance.SecondRoadOpensThisYear(currentYear)) subtitle.text = "Monsters found the second road. Guard both paths!";
+            else if (yearInDecade == 1 && slot != null) subtitle.text = $"{slot.Stage.Display()} {(slot.IsRepeat ? "goes on" : "begins")}: ages {slot.AgeFrom}-{slot.AgeTo}";
+            else if (WaveManager.Instance != null && WaveManager.Instance.LaneOpensThisYear(currentYear)) subtitle.text = "Monsters found the second road. Guard both paths!";
             else subtitle.text = eraChangedThisYear && era != null ? $"{Story.HeroPossessive} party grows: {era.displayName}" : "";
         }
 

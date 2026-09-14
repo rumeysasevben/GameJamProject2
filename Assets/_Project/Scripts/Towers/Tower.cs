@@ -104,7 +104,7 @@ namespace TenCandles
 
         void Fire(Enemy target)
         {
-            bool crit = StatRegistry.CritChance > 0f && Random.value < StatRegistry.CritChance;
+            bool crit = StatRegistry.CritChance > 0f && (float)Lifetime.LifetimeManager.CombatRandom.NextDouble() < StatRegistry.CritChance;
             var hit = new ProjectileHit
             {
                 damage = Damage * (crit ? StatRegistry.CritDamageMultiplier : 1f),

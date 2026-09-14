@@ -35,7 +35,6 @@ namespace TenCandles
         public MapData Current { get; private set; }
         public bool IsGenerated => Selected != null && Selected.generated;
         public bool HasSecondRoute => Current != null && Current.secondRoute != null && Current.secondRoute.Length > 1 && secondRoute != null;
-        public int SecondRouteFromYear => HasSecondRoute ? Current.secondRouteFromYear : int.MaxValue;
 
         public event Action MapChanged;
 

@@ -136,9 +136,29 @@ namespace TenCandles.Core
 
         public const float StayHpMultiplier  \= 1.30f;   // \+30% enemy HP when Stay chosen
 
-        // Candle cap per stage index 0..3
+        // Candle cap per tier index 0..3 (the run's 1st..4th decade, NOT the biome).
 
-        public static readonly int\[\] StageCandleCap \= { 10, 10, 9, 7 };
+        // Indexed by RunState.CurrentTier so Stay cannot dodge ageing.
+
+        public static readonly int\[\] TierCandleCap \= { 10, 10, 9, 7 };
+
+        // Lanes the map may use per tier index 0..3. Active lanes \= min(map entrance count, TierLaneAllowance\[CurrentTier\]).
+
+        public static readonly int\[\] TierLaneAllowance \= { 1, 2, 2, 2 };
+
+        // In the decade a lane first opens, its share of each wave ramps from Start (year 1) to End (year 10); End after that (§12.2).
+
+        public const float NewLaneShareStart \= 0.25f;
+
+        public const float NewLaneShareEnd   \= 0.50f;
+
+        // Mastery passives, granted by Stay with the mastery tower and kept for the rest of the run (§5.1).
+
+        public const int   LongSummerCandles       \= 1;      // Childhood: MaxCandlesAdd
+
+        public const float BoundlessEnergyFireRate \= 0.15f;  // Youth: TowerFireRateMul
+
+        public const float SavingsKillReward       \= 0.20f;  // Adulthood: KillRewardMul
 
         // \---------- Wave scaling \----------
 
@@ -178,7 +198,7 @@ namespace TenCandles.Core
 
         // \---------- Age-derived \----------
 
-        public const int TowerCapacityBase \= 2;
+        public const int TowerCapacityBase \= 3;       // invariant: capacity \>= 2 × active lanes (§7)
 
         public const int TowerCapacityPerAge \= 8;       // capacity \= Base \+ age / PerAge
 
@@ -228,6 +248,12 @@ namespace TenCandles.Core
 
         public const int HardYearsMaxTier    \= 15;
 
+        // \---------- Balance harness \----------
+
+        // Seconds on the road after an enemy's spawn slot: Duration \= Count × Gap \+ SimWalkSeconds (§8).
+
+        public const float SimWalkSeconds \= 7f;
+
     }
 
 }
@@ -260,7 +286,7 @@ float Gap   (int d, int y) \=\> Mathf.Max(Balance.GapMinimum,
 
                                               \- Balance.GapStageStep \* d);
 
-> `d` is the **difficulty tier** (0-based slot index in the run), not the biome identity. If the player chooses Stay, the next decade reuses the same biome but `d` still increments, and enemy HP is additionally multiplied by `Balance.StayHpMultiplier`.
+> `d` is the **difficulty tier** (0-based slot index in the run), not the biome identity. If the player chooses Stay, the next decade reuses the same biome but `d` still increments, and enemy HP is additionally multiplied by `Balance.StayHpMultiplier`. Everything that represents ageing — `TierCandleCap`, `TierLaneAllowance` and the wave formulas — is indexed by `d`, never by stage.
 
 ---
 
@@ -303,7 +329,7 @@ public sealed class CandleClock : MonoBehaviour
 - `0 <= TimeRemaining <= MaxTime` at all times.  
 - `MaxTime == CandleCap * Balance.SecondsPerCandle`.  
 - `TrySpend` returns false and changes nothing if `seconds > TimeRemaining`.  
-- `Add` never raises `TimeRemaining` above `MaxTime`; the discarded amount is reported via `GameEvents.OnTimeOverflow(float wasted)` for telemetry and UI feedback.  
+- `Add` never raises `TimeRemaining` above `MaxTime`; the discarded amount is reported via `GameEvents.TimeOverflow(float wasted)` for telemetry and UI feedback.  
 - Lowering `CandleCap` clamps `TimeRemaining` down to the new `MaxTime` immediately.
 
 ### 3.3 Candle visualisation
@@ -323,7 +349,7 @@ Implementation notes carried over from v1, still required:
 - Candle sprite pivot **bottom-centre**; melt by scaling `localScale.y`.  
 - The flame is **not** a child of the scaled candle transform — it is a sibling repositioned each frame to the candle's current top, otherwise it squashes.  
 - Lerp the visual height toward the target, **except** on a leak, where it must snap so the hit reads.  
-- On a candle going out, raise `GameEvents.OnCandleExtinguished(index)` once. UI, audio, FX and the screen-darkening all subscribe to that single event.
+- On a candle going out, raise `GameEvents.CandleExtinguished(index)` once. UI, audio, FX and the screen-darkening all subscribe to that single event.
 
 ---
 
@@ -377,6 +403,8 @@ public sealed class RunState
 
     public int   Seed;
 
+    \[NonSerialized\] public System.Random Rng;         // new System.Random(Seed); the only source of run randomness (§13.3)
+
 }
 
 ### 4.2 Game state machine
@@ -421,72 +449,82 @@ Triggered after the year-10 card pick of each decade, i.e. at ages 10, 20, 30\. 
 
 | Choice | Effect | Cost | Reward |
 | :---- | :---- | :---- | :---- |
-| **Stay** | Next decade reuses the same `DecadeStage`; `TierIndex` still increments | Enemy HP × `Balance.StayHpMultiplier` (1.30) for that decade | Grants that stage's **Mastery tower** (§9) permanently for the run, plus its passive |
-| **Advance** | Next decade uses `Stage + 1` | — | Unlocks that stage's **Visit tower** (§9); reward rate rises via `d` |
+| **Stay** | Next decade reuses the same `DecadeStage`; `TierIndex` still increments | Enemy HP × `Balance.StayHpMultiplier` (1.30) for that decade | Grants that stage's **Mastery tower** (§9) and its **mastery passive** (below), both permanently for the run |
+| **Advance** | Next decade uses `Stage + 1` | — | Unlocks that stage's **Visit tower(s)** (§9) on the first visit; reward rate rises via `d`. Old Age has two visit towers |
+
+**Mastery passives.** Birthdays happen at ages 10, 20 and 30 only, so Stay can never target Old Age: there are exactly three passives. A passive is a permanent stat entry applied through the card pipeline (`UpgradeEffect` → `StatRegistry`), granted together with the mastery tower and kept for the rest of the run. It is not a card: it takes no card slot and never counts toward `maxStacks`.
+
+| Stage | Passive | Effect | Value (`Balance`) |
+| :---- | :---- | :---- | ----: |
+| Childhood | **Long Summer** | `MaxCandlesAdd` | \+1 (`LongSummerCandles`) |
+| Youth | **Boundless Energy** | `TowerFireRateMul` | \+0.15 (`BoundlessEnergyFireRate`) |
+| Adulthood | **Savings** | `KillRewardMul` | \+0.20 (`SavingsKillReward`) |
+
+A Long Summer candle is a bonus candle: it sits on top of `TierCandleCap` at every later tier, like a card-granted candle.
+
+**Old Age payoff.** Old Age is the only stage with no Stay option and only `A A A` reaches it, so entering it grants **both** of its towers (`memory_lantern` and `hourglass`) as visit towers. This gives the one life with no masteries a concrete reward, and no tower in §9.2 is unreachable.
 
 **Legality:** `Stay` is disabled when it would produce a third consecutive slot of the same stage (`Balance.MaxVisitsPerStage`). `Advance` is disabled when the current stage is already `OldAge` (unreachable in a 4-slot run, but assert it).
+
+Neither choice changes the ageing curve: the candle cap (`TierCandleCap`) and lane allowance (`TierLaneAllowance`) follow the tier, so a Stay decade has the same cap and lanes as an Advance decade at the same age.
 
 ### 5.2 The five legal lives
 
 Enumerate these in a test. `S` \= Stay, `A` \= Advance.
 
-| Choices | Composition | Name | Masteries | Visit towers |
-| :---- | :---- | :---- | :---- | :---- |
-| `A A A` | Childhood · Youth · Adulthood · OldAge | **Full Life** | none | whistle, music\_box, camera, memory\_lantern |
-| `A A S` | Childhood · Youth · Adulthood × 2 | **Late Bloomer** | champagne | whistle, music\_box, camera |
-| `A S A` | Childhood · Youth × 2 · Adulthood | **Long Youth** | searchlight | whistle, music\_box, camera |
-| `S A A` | Childhood × 2 · Youth · Adulthood | **Slow Childhood** | balloon\_trap | whistle, music\_box, camera |
-| `S A S` | Childhood × 2 · Youth × 2 | **Never Grew Up** | balloon\_trap, searchlight | whistle, music\_box |
+| Choices | Composition | Name | Masteries | Passives | Visit towers |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+| `A A A` | Childhood · Youth · Adulthood · OldAge | **Full Life** | none | none | whistle, music\_box, camera\_flash, memory\_lantern, hourglass |
+| `A A S` | Childhood · Youth · Adulthood × 2 | **Late Bloomer** | champagne | Savings | whistle, music\_box, camera\_flash |
+| `A S A` | Childhood · Youth × 2 · Adulthood | **Long Youth** | searchlight | Boundless Energy | whistle, music\_box, camera\_flash |
+| `S A A` | Childhood × 2 · Youth · Adulthood | **Slow Childhood** | balloon\_trap | Long Summer | whistle, music\_box, camera\_flash |
+| `S A S` | Childhood × 2 · Youth × 2 | **Never Grew Up** | balloon\_trap, searchlight | Long Summer, Boundless Energy | whistle, music\_box |
 
 `A A A` is the only path that reaches `OldAge`. Combinations `S S *` and `A S S` are illegal by the max-visits rule.
 
 ### 5.3 GameEvents
 
-`Assets/_Project/Scripts/Core/GameEvents.cs` — static class of `Action` fields. Exactly these:
+`Assets/_Project/Scripts/Core/GameEvents.cs` — static class. **Convention (matches the codebase):** each event is a `public static event Action<…> Name` with no `On` prefix, raised only through a matching `RaiseName(…)` method. Subscribers name their handlers `OnName`. Do not rename existing events to add a prefix.
 
-OnTimeChanged        (float current, float max)
+Implemented:
 
-OnTimeOverflow       (float wasted)
+| Event | Arguments | Notes |
+| :---- | :---- | :---- |
+| `TimeChanged` | (float current, float max) | |
+| `TimeAdjusted` | (float delta, string reason) | every labelled gain or loss, for popups |
+| `CandleExtinguished` | (int index) | |
+| `CandleRestored` | (int index) | |
+| `CandleCountChanged` | (int newCap) | the candle cap changed (tier change or card) |
+| `TimeRanOut` | () | |
+| `StateChanged` | (GameState state) | |
+| `WaveStarted` | (int age) | tier and year in decade derive from age |
+| `WaveCleared` | (int age) | |
+| `EraChanged` | (int era) | v1 visual eras; replaced by `StageChanged` in Phase 6 |
+| `GameOver` | (bool victory) | age reached is `GameManager.Age` |
+| `BirthdayOffered` | (bool stayLegal, bool advanceLegal) | reasons are on `LifetimeManager.Options` |
+| `BirthdayChosen` | (BirthdayChoice choice, DecadeStage newStage) | |
+| `StageChanged` | (DecadeStage stage, int tier) | |
+| `EnemySpawned` | (Enemy e) | |
+| `EnemyDamaged` | (Enemy e, float amount, bool crit) | |
+| `EnemyKilled` | (Enemy e, float reward) | reward already includes `KillRewardMul` |
+| `EnemyLeaked` | (Enemy e) | |
+| `TowerBuilt` | (Tower t) | |
+| `TowerUpgraded` | (Tower t, int newLevel) | |
+| `TowerFired` | (Tower t) | |
+| `ProjectileImpact` | (Vector3 position, float splashRadius, TowerKind kind) | |
+| `BuildFailed` | (string reason) | |
+| `LevelUpOffered` | (UpgradeCard\[\] cards) | the card offer (§11.3) |
+| `UpgradeChosen` | (UpgradeCard card) | |
 
-OnCandleExtinguished (int index)
+Planned, added by the phase that needs them, same convention:
 
-OnCandleRestored     (int index)
-
-OnCandleCapChanged   (int newCap)
-
-OnEnemySpawned       (Enemy e)
-
-OnEnemyKilled        (Enemy e, float reward)
-
-OnEnemyLeaked        (Enemy e)
-
-OnTowerBuilt         (Tower t)
-
-OnTowerUpgraded      (Tower t, int newLevel)
-
-OnWaveStarted        (int age, int tier, int yearInDecade)
-
-OnWaveCleared        (int age)
-
-OnCardsOffered       (UpgradeCard\[\] three)
-
-OnCardChosen         (UpgradeCard card)
-
-OnWishResolved       (int candlesBlown, WishGift gift)
-
-OnBirthdayOffered    (bool stayLegal, bool advanceLegal)
-
-OnBirthdayChosen     (BirthdayChoice choice, DecadeStage newStage)
-
-OnStageChanged       (DecadeStage stage, int tier)
-
-OnWindWarning        (float seconds)
-
-OnWindStarted        (float duration)
-
-OnWindEnded          ()
-
-OnGameOver           (bool victory, int ageReached)
+| Event | Arguments | Phase |
+| :---- | :---- | :---- |
+| `TimeOverflow` | (float wasted) | 3 |
+| `WishResolved` | (int candlesBlown, WishGift gift) | 3 |
+| `WindWarning` | (float seconds) | 6 |
+| `WindStarted` | (float duration) | 6 |
+| `WindEnded` | () | 6 |
 
 ---
 
@@ -506,7 +544,7 @@ Rules:
 - An option is selectable only if `CandleClock.TimeRemaining >= cost`.  
 - The gift is a `UpgradeCard` drawn from the `Lifetime` rarity pool (§11), which is **only** reachable through wishes.  
 - The spend goes through `CandleClock.TrySpend(cost, "wish")`.  
-- `GameEvents.OnWishResolved` fires in all cases, including 0 candles.
+- `GameEvents.WishResolved` fires in all cases, including 0 candles.
 
 Design intent: this is the signature moment of the game. Blowing out candles must be spectacular — VFX, audio, a hard beat — because the player is trading lifespan for power.
 
@@ -516,18 +554,22 @@ Design intent: this is the signature moment of the game. Blowing out candles mus
 
 int TowerCapacity(int age) \=\> Balance.TowerCapacityBase \+ age / Balance.TowerCapacityPerAge;
 
-| Age | Tower capacity | Candle cap (by stage) |
-| ----: | ----: | ----: |
-| 1–7 | 2 | 10 |
-| 8–15 | 3 | 10 |
-| 16–23 | 4 | 10 / 9 |
-| 24–31 | 5 | 9 / 7 |
-| 32–39 | 6 | 7 |
-| 40 | 7 | 7 |
+int ActiveLanes(int mapEntrances, int tier) \=\> Mathf.Min(mapEntrances, Balance.TierLaneAllowance\[tier\]);
+
+| Age | Tower capacity | Candle cap (by tier) | Lane allowance (by tier) |
+| ----: | ----: | ----: | ----: |
+| 1–7 | 3 | 10 | 1 |
+| 8–15 | 4 | 10 | 1 / 2 |
+| 16–23 | 5 | 10 / 9 | 2 |
+| 24–31 | 6 | 9 / 7 | 2 |
+| 32–39 | 7 | 7 | 2 |
+| 40 | 8 | 7 | 2 |
+
+**Invariant:** tower capacity must always be ≥ 2 × active lanes, so every open lane can be covered by at least two towers. The tightest point is ages 11–15 (capacity 4, two lanes). Checked by `BalanceSimulator` (§17, check 7) against the lane allowance, i.e. the worst case of a map with enough entrances.
 
 Card rarity gate by age: `Common` always; `Rare` from `Balance.RareUnlockAge` (12); `Epic` from `Balance.EpicUnlockAge` (20); `Lifetime` only from wishes.
 
-> The intended tension: capacity rises while the candle cap falls. In `OldAge` the player fields 7 towers on a 210-second wallet. Power up, fragility up.
+> The intended tension: capacity rises while the candle cap falls. In the fourth decade the player fields 8 towers on a 210-second wallet. Power up, fragility up.
 
 ---
 
@@ -644,15 +686,15 @@ These are **first-pass values**. They are internally consistent (see §9.3) but 
 | `camera_flash` | Camera Flash | Control | 55 | 10.0 | 0.50 | 2.6 | 1.5 | freezes hit enemies 0.8 s | Adulthood visit |
 | `champagne` | Champagne | Chain | 65 | 18.0 | 0.70 | 3.2 | — | chains to 3 targets, −25 % dmg per hop | Adulthood **mastery** |
 | `memory_lantern` | Memory Lantern | Summon | 75 | 22.0 | 0.60 | 3.0 | — | killed enemy becomes an ally ghost for 4 s | OldAge visit |
-| `hourglass` | Hourglass | Economy | 50 | 5.0 | 1.00 | 3.5 | — | kills inside its range grant \+0.5 s extra | OldAge **mastery** |
+| `hourglass` | Hourglass | Economy | 50 | 5.0 | 1.00 | 3.5 | — | kills inside its range grant \+0.5 s extra | OldAge visit (granted together with `memory_lantern`, §5.1) |
 
 ### 9.3 Upgrade maths and the hard constraint
 
 `effectiveDamage(level) = damage * Balance.LevelDamageMultiplier[level] * StatRegistry.DamageMultiplier` `upgradeCost(level)    = baseCost * Balance.LevelCostMultiplier[level] * StatRegistry.CostMultiplier`
 
-> **Hard constraint — enforce with an editor validation:** no single upgrade step may cost more than the smallest stage candle cap (`min(StageCandleCap) * SecondsPerCandle` \= **210 s**). The most expensive case is `memory_lantern` L5 \= `75 × 2.60 = 195 s`. Any tower whose `baseCost × 2.60 > 210` is invalid content — the player could never afford it. `DataAssetGenerator` must fail the build on violation.
+> **Hard constraint — enforce with an editor validation:** no single upgrade step may cost more than the smallest stage candle cap (`min(TierCandleCap) * SecondsPerCandle` \= **210 s**). The most expensive case is `memory_lantern` L5 \= `75 × 2.60 = 195 s`. Any tower whose `baseCost × 2.60 > 210` is invalid content — the player could never afford it. `DataAssetGenerator` must fail the build on violation.
 
-Sanity target: at age 40 the player fields 7 towers and needs 628 DPS, i.e. \~90 DPS per tower. A level-5 `firework_launcher` at 4.60× with \~3 targets in splash reaches roughly that with card multipliers. Verify with `BalanceSimulator`.
+Sanity target: at age 40 the player fields 8 towers and needs 628 DPS, i.e. \~80 DPS per tower. A level-5 `firework_launcher` at 4.60× with \~3 targets in splash reaches roughly that with card multipliers. Verify with `BalanceSimulator`.
 
 ### 9.4 TowerAbility
 
@@ -789,7 +831,7 @@ Floater only: Walk ──(at segment marker)──► Airborne ──► Walk
 | `Sprint` | Runner only, one-shot, \+40 % speed, 2 s |
 | `Airborne` | Floater only, untargetable, lerps across one segment |
 | `ReachEnd` | stops, fires within one frame |
-| `BlowOut` | raises `GameEvents.OnEnemyLeaked`; `CandleClock.ApplyLeak()` or thief variant |
+| `BlowOut` | raises `GameEvents.EnemyLeaked`; `CandleClock.ApplyLeak()` or thief variant |
 | `Despawn` | returns to pool |
 
 ---
@@ -840,7 +882,7 @@ public enum UpgradeEffectType
 
     SplashRadiusMul, CritChanceAdd, CritMultiplierAdd, ChainTargetsAdd, PierceAdd,
 
-    KillRewardAdd, WaveClearBonusAdd, LeakPenaltyAdd, MaxCandlesAdd,
+    KillRewardAdd, KillRewardMul, WaveClearBonusAdd, LeakPenaltyAdd, MaxCandlesAdd,
 
     SlowStrengthAdd, BurnDamageMul, FreezeDurationAdd,
 
@@ -884,12 +926,12 @@ All effects funnel into `StatRegistry`, a single struct of global multipliers th
 
 ### 11.3 Draw rules
 
-- Offer `Balance.CardsOfferedPerYear` (3) distinct cards after each cleared wave.  
+- Offer `Balance.CardsOfferedPerYear` (3) distinct cards **every 2 years**: after the waves of ages 1, 3, 5 … 39, i.e. **20 offers per run**. Not every wave: 40 picks against a pool of ~25 cards averaging 2 stacks would leave the last third of the run with no real choice.  
 - Exclude cards already at `maxStacks`.  
 - Exclude cards whose `targetTowerId` the player does not own.  
 - Filter by rarity gate on `RunState.CurrentAge` (§7).  
 - `Lifetime` cards are never offered here — wishes only.  
-- Draw must use the run's seeded RNG (§13.3), never `UnityEngine.Random`.
+- Draw must use the run's seeded RNG (`RunState.Rng`, §13.3), never `UnityEngine.Random`. `KillRewardMul` multiplies the reward reported by `EnemyKilled`.
 
 ---
 
@@ -900,13 +942,15 @@ All effects funnel into `StatRegistry`, a single struct of global multipliers th
 `WindController`, enabled per stage via `StageThemeData.windEnabled`.
 
 1. Schedule a gust at a random point in each wave (never in years 1–2 of the run).  
-2. Raise `OnWindWarning(Balance.WindTelegraphSeconds)`; UI shows a clear 3-second telegraph.  
+2. Raise `WindWarning(Balance.WindTelegraphSeconds)`; UI shows a clear 3-second telegraph.  
 3. Call `CandleClock.SetDrainMultiplier(Balance.WindDrainMultiplier)` for the gust duration (4–8 s scaled by tier).  
-4. Restore to 1 and raise `OnWindEnded`.
+4. Restore to 1 and raise `WindEnded`.
 
 ### 12.2 Path variants
 
 Each `StageThemeData` holds 3 `PathRoute` prefabs. One is chosen per decade from the run seed. Reuse the existing MapPainter editor tool to author them.
+
+**Multi-lane maps.** A map may have more than one entrance, each with its own route ending at the same cake. The number of lanes in use is `ActiveLanes = min(map entrance count, Balance.TierLaneAllowance[RunState.CurrentTier])` (§7): tier 0 is always single-lane, and the second lane opens at tier 1. It is indexed by tier, not stage, so Stay does not delay it. Regular enemies are dealt across the active lanes by share, deterministically (each goes to the lane furthest behind its share); stage bosses always take the first lane. **Ease-in:** in the decade a lane first opens (tier 1 for the second lane), its share ramps linearly from `Balance.NewLaneShareStart` (25 %, year 1) to `Balance.NewLaneShareEnd` (50 %, year 10), and stays at 50 % from then on. This softens the system's tightest point (age 11: capacity 4, two lanes), where the new lane gets 3 of 11 enemies. A map's own "lane opens at year N" setting is not used — the allowance table replaces it. Every route stays drawn, so the player can see a lane before it opens.
 
 ### 12.3 Memory fragments
 
@@ -935,7 +979,7 @@ Unlocked after the first `Full Life` victory. 15 tiers, cumulative, one modifier
 ### 13.3 Legend mode, seeds and leaderboard
 
 - Unlocked after first reaching age 40\. The run continues past 40; `d` keeps incrementing with `StageHpMultiplier` extrapolated as `17.50 * 2.57^(d-3)`. Score \= age reached.  
-- **All run randomness flows through one seeded `System.Random` stored in `RunState.Seed`.** Never call `UnityEngine.Random` in gameplay code. Daily seed \= `yyyyMMdd` hashed.  
+- **All run randomness comes from `RunState.Seed`: the seeded `System.Random` `RunState.Rng`, plus `RunState.CombatRng` for combat rolls.** Never call `UnityEngine.Random` in gameplay code. Card draws and wave shuffles use it since Phase 2. Combat rolls (crits) use a second stream, `RunState.CombatRng`, seeded from the same `Seed`, so the number of shots fired never shifts card offers or wave order. Daily seed \= `yyyyMMdd` hashed.  
 - Leaderboard submission sends `{ seed, score, choices[], wishes[], purchases[], checksum }`, not just the score. Server-side validation replays the choice log for plausibility. Client-side scores are forgeable; this only raises the bar.
 
 ---
@@ -1034,21 +1078,21 @@ Each phase must leave the game playable end to end. Never leave two systems half
 
 ### Phase 1 — Lifetime skeleton
 
-Extend the run to 40 waves across 4 tiers. `RunState`, `DecadeSlot`, `LifetimeManager`. Birthday screen exists but only says "Happy Birthday" and advances the stage. Per-stage candle cap. Age-derived tower capacity.
+Extend the run to 40 waves across 4 tiers. `RunState`, `DecadeSlot`, `LifetimeManager`. Birthday screen exists but only says "Happy Birthday" and advances the stage. Per-tier candle cap. Per-tier lane allowance on multi-lane maps. Age-derived tower capacity.
 
-**Acceptance:** a full 40-wave run is playable start to finish; the candle bar shows 10/10/9/7 by stage; tower capacity reaches 7 at age 40; `BalanceSimulator` reproduces the §8 table within ±2 %.
+**Acceptance:** a full 40-wave run is playable start to finish; the candle bar shows 10/10/9/7 by tier; tower capacity reaches 8 at age 40; a multi-lane map uses one lane in tier 0 and two from tier 1; `BalanceSimulator` reproduces the §8 table within ±2 %.
 
 ### Phase 2 — Stay / Advance
 
-`BirthdayController`, legality rules, `StayHpMultiplier`, mastery and visit tower grants.
+`BirthdayController`, legality rules, `StayHpMultiplier`, mastery and visit tower grants, mastery passives (§5.1), both Old Age towers as visit towers. **Seeded run RNG** (pulled forward from Phase 9 so balance tuning is reproducible): `RunState.Rng` drives card draws and wave shuffles; `RunState.CombatRng` drives crit rolls.
 
-**Acceptance:** all five lives in §5.2 are reachable; illegal options are disabled with a reason shown; a unit test enumerates exactly five legal choice sequences; masteries persist for the rest of the run.
+**Acceptance:** all five lives in §5.2 are reachable; illegal options are disabled with a reason shown; a unit test enumerates exactly five legal choice sequences; masteries and their passives persist for the rest of the run; the same seed produces the same card offers and wave shuffles.
 
 ### Phase 3 — Wish
 
 `WishSystem`, `Lifetime` rarity pool, the blow-out moment with full VFX and audio.
 
-**Acceptance:** all four candle options work; insufficient time disables the option; `OnWishResolved` fires in every case including 0; a wish gift persists to the end of the run.
+**Acceptance:** all four candle options work; insufficient time disables the option; `WishResolved` fires in every case including 0; a wish gift persists to the end of the run.
 
 ### Phase 4 — Content pass 1
 
@@ -1082,7 +1126,7 @@ Remaining towers and enemies, card pool to 40+, four stage bosses.
 
 ### Phase 9 — Legend, seeds, leaderboard
 
-Seeded RNG audit, Legend mode, daily seed, score submission.
+Legend mode, daily seed, score submission. (The seeded run RNG moved to Phase 2.)
 
 **Acceptance:** the same seed produces an identical run twice (waves, cards, paths); no `UnityEngine.Random` call remains in gameplay code; a submitted score round-trips with its choice log.
 
@@ -1113,7 +1157,8 @@ Checks it must perform:
 3. Required DPS dips at each decade boundary and later exceeds the prior peak — the sawtooth.  
 4. No tower violates the 210 s single-step cost cap.  
 5. Total run duration between 19 and 25 minutes.  
-6. Total kill income exceeds total drain by 2.5–3.5× (the tower budget).
+6. Total kill income exceeds total drain by 2.5–3.5× (the tower budget).  
+7. Tower capacity is ≥ 2 × `TierLaneAllowance[tier]` at every age 1–40 (the multi-lane invariant, §7).
 
 When tuning, turn these knobs in this order:
 

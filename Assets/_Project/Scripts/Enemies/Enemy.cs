@@ -199,7 +199,7 @@ namespace TenCandles
             IsAlive = false;
             Hp = 0f;
             Active.Remove(this);
-            GameEvents.RaiseEnemyKilled(this, Reward);
+            GameEvents.RaiseEnemyKilled(this, Reward * StatRegistry.KillRewardMultiplier);
             fsm.Change(EnemyStateId.Dying);
         }
 

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c9ebf879cb8f564a8733c959b594b40, type: 3}
   m_Name: CandleTower
   m_EditorClassIdentifier: Assembly-CSharp::TenCandles.TowerData
+  id: candle_tower
   displayName: Fire Brazier
   kind: 1
   description: Weak hits, but you burn and slow monsters. Keep them inside your Spike

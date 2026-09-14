@@ -2,13 +2,14 @@ using UnityEngine;
 
 namespace TenCandles
 {
-    // Writes a chosen card into StatRegistry (or CandleClock for time effects).
+    // Writes a chosen card, or a permanent stat entry such as a mastery passive, into StatRegistry (or CandleClock for time effects).
     public static class UpgradeEffect
     {
-        public static void Apply(UpgradeCard card)
+        public static void Apply(UpgradeCard card) => Apply(card.effect, card.value, card.kind, card.title);
+
+        public static void Apply(CardEffect effect, float v, TowerKind kind = default, string title = null)
         {
-            float v = card.value;
-            switch (card.effect)
+            switch (effect)
             {
                 case CardEffect.Damage: StatRegistry.DamageMultiplier += v; break;
                 case CardEffect.FireRate: StatRegistry.FireRateMultiplier += v; break;
@@ -26,11 +27,11 @@ namespace TenCandles
                 case CardEffect.Beeswax: StatRegistry.CandleSlowBonus += v; break;
                 case CardEffect.FreeTower: StatRegistry.FreeBuilds += Mathf.Max(1, Mathf.RoundToInt(v)); break;
                 case CardEffect.LastBreath: StatRegistry.LastBreathArmed = true; break;
-                case CardEffect.KindDamage: StatRegistry.KindDamage[(int)card.kind] += v; break;
-                case CardEffect.KindFireRate: StatRegistry.KindFireRate[(int)card.kind] += v; break;
+                case CardEffect.KindDamage: StatRegistry.KindDamage[(int)kind] += v; break;
+                case CardEffect.KindFireRate: StatRegistry.KindFireRate[(int)kind] += v; break;
                 case CardEffect.BurnBoost: StatRegistry.BurnMultiplier += v; break;
                 case CardEffect.UpgradeCost: StatRegistry.UpgradeCostMultiplier = Mathf.Max(0.2f, StatRegistry.UpgradeCostMultiplier - v); break;
-                case CardEffect.InstantTime: CandleClock.Instance.Add(v, card.title); break;
+                case CardEffect.InstantTime: CandleClock.Instance.Add(v, title); break;
                 case CardEffect.HitSlow: StatRegistry.HitSlowPercent = Mathf.Max(StatRegistry.HitSlowPercent, v); break;
                 case CardEffect.ArmorPierce: StatRegistry.IgnoreArmor = true; break;
                 case CardEffect.Blessing:
@@ -38,6 +39,7 @@ namespace TenCandles
                     StatRegistry.FireRateMultiplier += v * 0.5f;
                     break;
                 case CardEffect.SlowBurn: StatRegistry.DrainMultiplier = Mathf.Max(0.3f, StatRegistry.DrainMultiplier - v); break;
+                case CardEffect.KillRewardMul: StatRegistry.KillRewardMultiplier += v; break;
             }
         }
     }

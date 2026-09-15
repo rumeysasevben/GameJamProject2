@@ -4,7 +4,7 @@ using UnityEngine;
 namespace TenCandles
 {
     // The only owner of timeRemaining. Every gain, cost and penalty goes through here.
-    public class CandleClock : MonoBehaviour
+    public class CandleClock : MonoBehaviour, Lifetime.IWishWallet
     {
         public static CandleClock Instance { get; private set; }
 
@@ -42,12 +42,14 @@ namespace TenCandles
             if (IsDraining) SetTime(TimeRemaining - Balance.DrainRatePerSecond * StatRegistry.DrainMultiplier * Time.deltaTime);
         }
 
-        // Kill rewards, early-call bonus, card bonuses. Anything above MaxTime is lost.
+        // Kill rewards, early-call bonus, card bonuses. Anything above MaxTime is lost and reported as TimeOverflow (§3.2).
         public void Add(float seconds, string reason = null)
         {
             if (seconds <= 0f) return;
+            float wasted = Mathf.Max(0f, TimeRemaining + seconds - MaxTime);
             SetTime(TimeRemaining + seconds);
             if (reason != null) GameEvents.RaiseTimeAdjusted(seconds, reason);
+            if (wasted > 0f && !ranOut) GameEvents.RaiseTimeOverflow(wasted);
         }
 
         // Leak penalties. Allowed to hit zero.
@@ -82,12 +84,9 @@ namespace TenCandles
             SetTime(TimeRemaining);
         }
 
-        // "The Eleventh Candle" card: one more candle on the bar, lit.
-        public void AddCandle()
-        {
-            SetCandleCap(CandleCap + 1);
-            Add(Balance.SecondsPerCandle, "You earned a new candle!");
-        }
+        // MaxCandlesAdd ("The Eleventh Candle"): one more candle on the bar, unlit (§11.1). Raising the cap never
+        // fills it; the player still has to earn the seconds.
+        public void AddCandle() => SetCandleCap(CandleCap + 1);
 
         public int FullCandles => Mathf.FloorToInt(TimeRemaining / Balance.SecondsPerCandle);
         public float PartialFill => (TimeRemaining % Balance.SecondsPerCandle) / Balance.SecondsPerCandle;

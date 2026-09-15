@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Spike Mortar
   kind: 3
   description: Slow, long reach, huge blast. Your late-game backbone.
+  unlock: 0
+  unlockStage: 0
   baseCost: 55
   damage: 36
   fireRate: 0.4

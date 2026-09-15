@@ -25,6 +25,8 @@ namespace TenCandles
         public static bool LastBreathArmed;
         public static bool IgnoreArmor;
         public static int FreeBuilds;
+        // Added to the age-derived tower capacity (§7).
+        public static int TowerCapacityBonus;
 
         // Per tower kind, indexed by (int)TowerKind.
         public static readonly float[] KindDamage = new float[TowerKinds];
@@ -56,6 +58,7 @@ namespace TenCandles
             LastBreathArmed = false;
             IgnoreArmor = false;
             FreeBuilds = 0;
+            TowerCapacityBonus = 0;
             for (int i = 0; i < TowerKinds; i++)
             {
                 KindDamage[i] = 1f;

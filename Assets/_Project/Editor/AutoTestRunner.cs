@@ -74,6 +74,7 @@ namespace TenCandles.EditorTools
                 bot.reserveSeconds = ArgFloat("reserve", bot.reserveSeconds);
                 bot.avoidExtraCandles = Environment.GetCommandLineArgs().Contains("-bot.noExtraCandles");
                 bot.life = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("-bot.life="))?.Substring("-bot.life=".Length).ToUpperInvariant();
+                bot.wish = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("-bot.wish="))?.Substring("-bot.wish=".Length).ToLowerInvariant() ?? bot.wish;
                 bot.Finished = (victory, report) => Finish(victory, report);
                 // -bot.shots: Logs/autoplay_birthday_<age>.png and Logs/autoplay_stage<tier>_<stage>.png
                 if (Environment.GetCommandLineArgs().Contains("-bot.shots")) bot.Snapshot = tag => Capture($"Logs/autoplay_{tag}.png");
@@ -183,7 +184,7 @@ namespace TenCandles.EditorTools
                 {
                     Capture("Logs/menu_hud_drawer_closed.png");
                     TimeControl.SetPaused(true);
-                    // Year 7 unlocks every rarity and guarantees at least one Rare or Legendary.
+                    // Year 7 unlocks every rarity and guarantees at least one Rare or Epic.
                     LevelUpManager.Instance.Offer(7);
                 }
                 else if (frame == 300)

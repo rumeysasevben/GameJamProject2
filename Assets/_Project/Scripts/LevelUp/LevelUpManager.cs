@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TenCandles.Lifetime;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TenCandles
 {
@@ -19,8 +20,8 @@ namespace TenCandles
         [Header("Rarity")]
         [SerializeField] int rareFromYear = 3;
         [SerializeField] float rareWeight = 0.55f;
-        [SerializeField] int legendaryFromYear = 5;
-        [SerializeField] float legendaryWeight = 0.18f;
+        [SerializeField, FormerlySerializedAs("legendaryFromYear")] int epicFromYear = 5;
+        [SerializeField, FormerlySerializedAs("legendaryWeight")] float epicWeight = 0.18f;
         [Tooltip("Every offer from this year on holds at least one card of Rare or better.")]
         [SerializeField] int guaranteedRareFromYear = 5;
 
@@ -36,6 +37,9 @@ namespace TenCandles
         {
             if (Instance == this) Instance = null;
         }
+
+        // Every card, Lifetime ones included; WishSystem draws its gifts from here.
+        public IReadOnlyList<UpgradeCard> Pool => pool;
 
         public int Stacks(UpgradeCard card) => stacks.TryGetValue(card, out int n) ? n : 0;
 
@@ -82,7 +86,9 @@ namespace TenCandles
         bool Unlocked(UpgradeCard card, int year) => card.rarity switch
         {
             CardRarity.Rare => year >= rareFromYear,
-            CardRarity.Legendary => year >= legendaryFromYear,
+            CardRarity.Epic => year >= epicFromYear,
+            // Lifetime cards are wishes only (§11.3).
+            CardRarity.Lifetime => false,
             _ => true
         };
 
@@ -123,7 +129,7 @@ namespace TenCandles
         float Weight(UpgradeCard card) => card.rarity switch
         {
             CardRarity.Rare => rareWeight,
-            CardRarity.Legendary => legendaryWeight,
+            CardRarity.Epic => epicWeight,
             _ => 1f
         };
     }

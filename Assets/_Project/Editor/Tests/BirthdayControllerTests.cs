@@ -210,13 +210,13 @@ namespace TenCandles.EditorTools.Tests
         {
             Assert.AreEqual(("Long Summer", CardEffect.ExtraCandle, 1f), Passive(DecadeStage.Childhood));
             Assert.AreEqual(("Boundless Energy", CardEffect.FireRate, 0.15f), Passive(DecadeStage.Youth));
-            Assert.AreEqual(("Savings", CardEffect.KillRewardMul, 0.20f), Passive(DecadeStage.Adulthood));
+            Assert.AreEqual(("Established", CardEffect.TowerCapacityAdd, 1f), Passive(DecadeStage.Adulthood));
             Assert.IsNull(BirthdayController.PassiveFor(DecadeStage.OldAge));
 
             var expected = new Dictionary<string, string[]>
             {
                 ["AAA"] = new string[0],
-                ["AAS"] = new[] { "Savings" },
+                ["AAS"] = new[] { "Established" },
                 ["ASA"] = new[] { "Boundless Energy" },
                 ["SAA"] = new[] { "Long Summer" },
                 ["SAS"] = new[] { "Long Summer", "Boundless Energy" },
@@ -239,15 +239,43 @@ namespace TenCandles.EditorTools.Tests
             try
             {
                 var energy = BirthdayController.PassiveFor(DecadeStage.Youth);
-                var savings = BirthdayController.PassiveFor(DecadeStage.Adulthood);
+                var established = BirthdayController.PassiveFor(DecadeStage.Adulthood);
                 UpgradeEffect.Apply(energy.Effect, energy.Value, default, energy.Name);
-                UpgradeEffect.Apply(savings.Effect, savings.Value, default, savings.Name);
+                UpgradeEffect.Apply(established.Effect, established.Value, default, established.Name);
                 Assert.AreEqual(1.15f, StatRegistry.FireRateMultiplier, 1e-4f);
-                Assert.AreEqual(1.20f, StatRegistry.KillRewardMultiplier, 1e-4f);
+                Assert.AreEqual(1, StatRegistry.TowerCapacityBonus);
+                Assert.AreEqual(1f, StatRegistry.KillRewardMultiplier, 1e-4f, "Savings is gone");
             }
             finally
             {
                 StatRegistry.Reset();
+            }
+        }
+
+        // Established: +1 on top of the age-derived capacity at every later age, including 40.
+        [Test]
+        public void EstablishedRaisesTowerCapacityForTheRestOfTheRun()
+        {
+            var go = new UnityEngine.GameObject("Lifetime");
+            StatRegistry.Reset();
+            try
+            {
+                var lifetime = go.AddComponent<LifetimeManager>();
+                lifetime.BeginRun(0);
+                foreach (BirthdayChoice choice in new[] { A, A, S })
+                {
+                    lifetime.Run.CurrentAge += Balance.YearsPerDecade - 1;
+                    Assert.IsTrue(lifetime.ResolveBirthday(choice, SpecCatalogue));
+                    lifetime.AdvanceAge();
+                }
+                for (; lifetime.Run.CurrentAge <= Balance.TotalYears; lifetime.AdvanceAge())
+                    Assert.AreEqual(LifetimeManager.TowerCapacityFor(lifetime.Age) + 1, lifetime.TowerCapacity, "age " + lifetime.Age);
+                Assert.AreEqual(9, LifetimeManager.TowerCapacityFor(Balance.TotalYears) + StatRegistry.TowerCapacityBonus);
+            }
+            finally
+            {
+                StatRegistry.Reset();
+                UnityEngine.Object.DestroyImmediate(go);
             }
         }
 

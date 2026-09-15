@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: BirthdayWish
   m_EditorClassIdentifier: Assembly-CSharp::TenCandles.UpgradeCard
   title: Birthday Wish
-  description: You put 2 more candles on Farum's cake, lit and ready.
+  description: 'You put 2 more candles on Farum''s cake. They start unlit: earn the
+    seconds to light them.'
   rarity: 2
   effect: 7
   value: 2
   kind: 0
   maxStacks: 1
+  giftTier: 0
   icon: {fileID: 0}

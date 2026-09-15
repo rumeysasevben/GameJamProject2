@@ -80,6 +80,7 @@ namespace TenCandles
             GameEvents.EraChanged += OnEraChanged;
             GameEvents.GameOver += OnGameOver;
             GameEvents.UpgradeChosen += OnUpgradeChosen;
+            GameEvents.WishCandlesBlown += OnWishCandlesBlown;
         }
 
         void OnDisable()
@@ -94,6 +95,7 @@ namespace TenCandles
             GameEvents.EraChanged -= OnEraChanged;
             GameEvents.GameOver -= OnGameOver;
             GameEvents.UpgradeChosen -= OnUpgradeChosen;
+            GameEvents.WishCandlesBlown -= OnWishCandlesBlown;
         }
 
         void OnEnemyKilled(Enemy enemy, float reward)
@@ -166,6 +168,9 @@ namespace TenCandles
         }
 
         void OnCandleOut(int index) => CameraShake.Add(bigShake * 0.6f);
+
+        // A wish: one hard shake for all the candles at once. The game is paused, so the particles are drawn by WishUI.
+        void OnWishCandlesBlown(int candles) => CameraShake.Add(bigShake * (0.6f + 0.1f * candles));
 
         void OnUpgradeChosen(UpgradeCard card)
         {

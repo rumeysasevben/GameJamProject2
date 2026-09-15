@@ -21,4 +21,5 @@ MonoBehaviour:
   value: 1
   kind: 0
   maxStacks: 1
+  giftTier: 0
   icon: {fileID: 0}

@@ -29,6 +29,8 @@ namespace TenCandles
             GameEvents.WaveCleared += OnWaveCleared;
             GameEvents.LevelUpOffered += OnLevelUpOffered;
             GameEvents.UpgradeChosen += OnUpgradeChosen;
+            GameEvents.WishCandlesBlown += OnWishCandlesBlown;
+            GameEvents.WishResolved += OnWishResolved;
             GameEvents.EraChanged += OnEraChanged;
             GameEvents.GameOver += OnGameOver;
             GameEvents.StateChanged += OnStateChanged;
@@ -50,6 +52,8 @@ namespace TenCandles
             GameEvents.WaveCleared -= OnWaveCleared;
             GameEvents.LevelUpOffered -= OnLevelUpOffered;
             GameEvents.UpgradeChosen -= OnUpgradeChosen;
+            GameEvents.WishCandlesBlown -= OnWishCandlesBlown;
+            GameEvents.WishResolved -= OnWishResolved;
             GameEvents.EraChanged -= OnEraChanged;
             GameEvents.GameOver -= OnGameOver;
             GameEvents.StateChanged -= OnStateChanged;
@@ -110,6 +114,12 @@ namespace TenCandles
         void OnWaveCleared(int year) => Play(bank.waveCleared, 1f, 0.03f);
         void OnLevelUpOffered(UpgradeCard[] cards) => Play(bank.levelUp, 0.9f, 0f);
         void OnUpgradeChosen(UpgradeCard card) => Play(bank.cardPicked, 0.9f, 0f);
+        void OnWishCandlesBlown(int candles) => Play(bank.wishBlow, 1f, 0f);
+
+        void OnWishResolved(int candles, Lifetime.WishGift gift)
+        {
+            if (gift != null) Play(bank.wishGranted, 1f, 0f);
+        }
 
         void OnEraChanged(int era)
         {

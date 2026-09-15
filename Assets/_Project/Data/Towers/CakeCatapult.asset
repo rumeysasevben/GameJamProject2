@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Catapult
   kind: 2
   description: You lob rocks that splash a small group.
+  unlock: 0
+  unlockStage: 0
   baseCost: 40
   damage: 15
   fireRate: 0.8

@@ -15,6 +15,7 @@ namespace TenCandles
         public static event Action<int> CandleRestored;            // candle index
         public static event Action<int> CandleCountChanged;        // new candle count
         public static event Action TimeRanOut;
+        public static event Action<float> TimeOverflow;            // seconds discarded because the wallet was full
 
         // Flow
         public static event Action<GameState> StateChanged;
@@ -27,6 +28,8 @@ namespace TenCandles
         public static event Action<bool, bool> BirthdayOffered;                 // stayLegal, advanceLegal
         public static event Action<BirthdayChoice, DecadeStage> BirthdayChosen; // choice, new stage
         public static event Action<DecadeStage, int> StageChanged;              // stage, tier
+        public static event Action<int> WishCandlesBlown;                       // candles blown out (1, 3 or 5); the gift pick follows
+        public static event Action<int, WishGift> WishResolved;                 // candles blown, gift (null for 0 candles)
 
         // Enemies
         public static event Action<Enemy> EnemySpawned;
@@ -51,6 +54,7 @@ namespace TenCandles
         public static void RaiseCandleRestored(int index) => CandleRestored?.Invoke(index);
         public static void RaiseCandleCountChanged(int count) => CandleCountChanged?.Invoke(count);
         public static void RaiseTimeRanOut() => TimeRanOut?.Invoke();
+        public static void RaiseTimeOverflow(float wasted) => TimeOverflow?.Invoke(wasted);
 
         public static void RaiseStateChanged(GameState state) => StateChanged?.Invoke(state);
         public static void RaiseWaveStarted(int year) => WaveStarted?.Invoke(year);
@@ -61,6 +65,8 @@ namespace TenCandles
         public static void RaiseBirthdayOffered(bool stayLegal, bool advanceLegal) => BirthdayOffered?.Invoke(stayLegal, advanceLegal);
         public static void RaiseBirthdayChosen(BirthdayChoice choice, DecadeStage stage) => BirthdayChosen?.Invoke(choice, stage);
         public static void RaiseStageChanged(DecadeStage stage, int tier) => StageChanged?.Invoke(stage, tier);
+        public static void RaiseWishCandlesBlown(int candles) => WishCandlesBlown?.Invoke(candles);
+        public static void RaiseWishResolved(int candles, WishGift gift) => WishResolved?.Invoke(candles, gift);
 
         public static void RaiseEnemySpawned(Enemy e) => EnemySpawned?.Invoke(e);
         public static void RaiseEnemyDamaged(Enemy e, float amount, bool crit) => EnemyDamaged?.Invoke(e, amount, crit);

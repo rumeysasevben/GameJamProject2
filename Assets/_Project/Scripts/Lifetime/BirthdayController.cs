@@ -64,15 +64,15 @@ namespace TenCandles.Lifetime
             $"+{Balance.LongSummerCandles} candle");
         static readonly MasteryPassive BoundlessEnergy = new MasteryPassive("Boundless Energy", CardEffect.FireRate, Balance.BoundlessEnergyFireRate,
             $"+{Math.Round(Balance.BoundlessEnergyFireRate * 100f)}% tower fire rate");
-        static readonly MasteryPassive Savings = new MasteryPassive("Savings", CardEffect.KillRewardMul, Balance.SavingsKillReward,
-            $"+{Math.Round(Balance.SavingsKillReward * 100f)}% time from every kill");
+        static readonly MasteryPassive Established = new MasteryPassive("Established", CardEffect.TowerCapacityAdd, Balance.EstablishedTowerCapacity,
+            $"+{Balance.EstablishedTowerCapacity} tower allowed");
 
         // Null for Old Age: birthdays are at 10/20/30 only, so Old Age can never be stayed in.
         public static MasteryPassive PassiveFor(DecadeStage stage) => stage switch
         {
             DecadeStage.Childhood => LongSummer,
             DecadeStage.Youth => BoundlessEnergy,
-            DecadeStage.Adulthood => Savings,
+            DecadeStage.Adulthood => Established,
             _ => null
         };
 

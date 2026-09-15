@@ -34,6 +34,12 @@ namespace TenCandles
         public AudioClip waveCleared;
         public AudioClip levelUp;
         public AudioClip cardPicked;
+
+        [Header("Wish")]
+        [Tooltip("The hard beat as the candles are blown out.")]
+        public AudioClip wishBlow;
+        [Tooltip("The gift is granted.")]
+        public AudioClip wishGranted;
         public AudioClip uiClick;
         public AudioClip victory;
         public AudioClip defeat;

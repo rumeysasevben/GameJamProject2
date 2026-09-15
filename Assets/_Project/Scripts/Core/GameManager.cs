@@ -49,6 +49,7 @@ namespace TenCandles
             GameEvents.WaveCleared += OnWaveCleared;
             GameEvents.UpgradeChosen += OnUpgradeChosen;
             GameEvents.TimeRanOut += OnTimeRanOut;
+            GameEvents.WishResolved += OnWishResolved;
         }
 
         void OnDisable()
@@ -56,6 +57,7 @@ namespace TenCandles
             GameEvents.WaveCleared -= OnWaveCleared;
             GameEvents.UpgradeChosen -= OnUpgradeChosen;
             GameEvents.TimeRanOut -= OnTimeRanOut;
+            GameEvents.WishResolved -= OnWishResolved;
         }
 
         void Start()
@@ -175,7 +177,7 @@ namespace TenCandles
             if (State == GameState.LevelUp) AfterCardPick();
         }
 
-        // Ages 10, 20 and 30 end a decade with a birthday; every other age moves straight on.
+        // Ages 10, 20 and 30 end a decade with a wish and then a birthday; every other age moves straight on.
         void AfterCardPick()
         {
             if (!LifetimeManager.IsBirthdayAge(Age))
@@ -183,6 +185,28 @@ namespace TenCandles
                 NextYear();
                 return;
             }
+            Enter(GameState.Wish);
+        }
+
+        // Wish step 1 (§6): 0, 1, 3 or 5 candles. An illegal count is ignored; the wish screen shows why.
+        public void BlowWishCandles(int candles)
+        {
+            if (State == GameState.Wish) Lifetime.Wish.Blow(candles);
+        }
+
+        // Wish step 2: the gift, from the offer drawn by BlowWishCandles.
+        public void ChooseWishGift(int index)
+        {
+            if (State == GameState.Wish) Lifetime.Wish.Choose(index);
+        }
+
+        void OnWishResolved(int candles, WishGift gift)
+        {
+            if (State == GameState.Wish) OfferBirthday();
+        }
+
+        void OfferBirthday()
+        {
             Enter(GameState.Birthday);
             BirthdayOptions options = Lifetime.OfferBirthday();
             GameEvents.RaiseBirthdayOffered(options.StayLegal, options.AdvanceLegal);
@@ -206,7 +230,7 @@ namespace TenCandles
             State = next;
             var clock = CandleClock.Instance;
             if (clock != null) clock.IsDraining = next == GameState.Intermission || next == GameState.Wave;
-            TimeControl.SetPaused(next == GameState.LevelUp || next == GameState.Birthday || next == GameState.Defeat);
+            TimeControl.SetPaused(next == GameState.LevelUp || next == GameState.Wish || next == GameState.Birthday || next == GameState.Defeat);
             GameEvents.RaiseStateChanged(next);
         }
     }

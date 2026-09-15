@@ -181,11 +181,30 @@ namespace TenCandles.EditorTools
                 Card("Mortar Crew", CardRarity.Rare, CardEffect.KindFireRate, 0.35f, TowerKind.Firework),
                 Card("Cold Snap", CardRarity.Rare, CardEffect.HitSlow, 0.15f),
                 Card("Armor Breaker", CardRarity.Rare, CardEffect.ArmorPierce, 1f),
-                Card("The Eleventh Candle", CardRarity.Legendary, CardEffect.ExtraCandle, 1f),
-                Card("Birthday Wish", CardRarity.Legendary, CardEffect.ExtraCandle, 2f),
-                Card("Farum's Blessing", CardRarity.Legendary, CardEffect.Blessing, 0.35f),
-                Card("Slow-Burning Wax", CardRarity.Legendary, CardEffect.SlowBurn, 0.3f),
-                Card("Meteor Mortar", CardRarity.Legendary, CardEffect.KindDamage, 0.8f, TowerKind.Firework),
+                Card("The Eleventh Candle", CardRarity.Epic, CardEffect.ExtraCandle, 1f),
+                Card("Birthday Wish", CardRarity.Epic, CardEffect.ExtraCandle, 2f),
+                Card("Farum's Blessing", CardRarity.Epic, CardEffect.Blessing, 0.35f),
+                Card("Slow-Burning Wax", CardRarity.Epic, CardEffect.SlowBurn, 0.3f),
+                Card("Meteor Mortar", CardRarity.Epic, CardEffect.KindDamage, 0.8f, TowerKind.Firework),
+                // Wish gifts (§6): Lifetime cards, wishes only, five per tier. None may grant time or candles.
+                // Small (1 candle): about a Rare card.
+                Gift("Warm Glow", Lifetime.WishGiftTier.Small, CardEffect.Damage, 0.25f),
+                Gift("Eager Hands", Lifetime.WishGiftTier.Small, CardEffect.FireRate, 0.2f),
+                Gift("Clear Sight", Lifetime.WishGiftTier.Small, CardEffect.Range, 0.25f),
+                Gift("Lucky Candle", Lifetime.WishGiftTier.Small, CardEffect.Crit, 0.12f),
+                Gift("Big Balloons", Lifetime.WishGiftTier.Small, CardEffect.SplashRadius, 0.35f),
+                // Large (3 candles): clearly above any card.
+                Gift("Legacy Flame", Lifetime.WishGiftTier.Large, CardEffect.Damage, 0.45f),
+                Gift("Open House", Lifetime.WishGiftTier.Large, CardEffect.TowerCapacityAdd, 1f),
+                Gift("Restless Hands", Lifetime.WishGiftTier.Large, CardEffect.FireRate, 0.4f),
+                Gift("Golden Luck", Lifetime.WishGiftTier.Large, CardEffect.Crit, 0.25f),
+                Gift("Drumroll", Lifetime.WishGiftTier.Large, CardEffect.KindFireRate, 0.75f, TowerKind.Confetti),
+                // Legendary (5 candles): changes how you play.
+                Gift("True Aim", Lifetime.WishGiftTier.Legendary, CardEffect.ArmorPierce, 1f),
+                Gift("Crowded Table", Lifetime.WishGiftTier.Legendary, CardEffect.TowerCapacityAdd, 2f),
+                Gift("Lucky Stars", Lifetime.WishGiftTier.Legendary, CardEffect.Crit, 0.5f),
+                Gift("Housewarming", Lifetime.WishGiftTier.Legendary, CardEffect.FreeTower, 3f),
+                Gift("Grand Finale", Lifetime.WishGiftTier.Legendary, CardEffect.KindDamage, 1.5f, TowerKind.Firework),
             };
 
             d.eras = new[]
@@ -284,13 +303,14 @@ namespace TenCandles.EditorTools
                 case CardEffect.WaveEndBonus: return $"You get +{c.value:0} s at the end of every year.";
                 case CardEffect.LeakShield: return $"A monster that reaches the cake costs you {c.value:0} s instead of a whole candle.";
                 case CardEffect.ExtraCandle: return c.value >= 2f
-                    ? $"You put {c.value:0} more candles on {Story.HeroPossessive} cake, lit and ready."
+                    ? $"You put {c.value:0} more candles on {Story.HeroPossessive} cake. They start unlit: earn the seconds to light them."
                     : $"You put one more candle on {Story.HeroPossessive} cake.\nBreak the ten.";
                 case CardEffect.Crit: return $"Your shots get a {pct} chance to deal 2.5× damage.";
                 case CardEffect.Chain: return "Your Stone Thrower shots bounce to a second monster.";
                 case CardEffect.SplashRadius: return $"Your splash damage reaches {pct} wider.";
                 case CardEffect.Beeswax: return "Your Fire Brazier slows monsters by 45% instead of 25%.";
-                case CardEffect.FreeTower: return "Your next tower costs you nothing.";
+                case CardEffect.FreeTower: return c.value >= 2f ? $"Your next {c.value:0} towers cost you nothing." : "Your next tower costs you nothing.";
+                case CardEffect.TowerCapacityAdd: return c.value >= 2f ? $"You may build {c.value:0} more towers at every age." : "You may build one more tower at every age.";
                 case CardEffect.LastBreath: return $"When you are down to your last candle, you get +{c.value:0} s. Once.";
                 case CardEffect.KindDamage: return $"Your {KindName(c.kind)} towers deal {pct} more damage.";
                 case CardEffect.KindFireRate: return $"Your {KindName(c.kind)} towers fire {pct} faster.";
@@ -371,8 +391,17 @@ namespace TenCandles.EditorTools
             card.value = value;
             card.kind = kind;
             card.maxStacks = 1;
+            card.giftTier = Lifetime.WishGiftTier.None;
             card.description = CardText(card, $"{value * 100f:0}%") ?? card.description;
             EditorUtility.SetDirty(card);
+            return card;
+        }
+
+        // A wish gift (§6): a Lifetime card in one tier's pool.
+        static UpgradeCard Gift(string title, Lifetime.WishGiftTier tier, CardEffect effect, float value, TowerKind kind = TowerKind.Confetti)
+        {
+            var card = Card(title, CardRarity.Lifetime, effect, value, kind);
+            card.giftTier = tier;
             return card;
         }
 

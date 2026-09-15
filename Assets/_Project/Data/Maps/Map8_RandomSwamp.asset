@@ -19,7 +19,6 @@ MonoBehaviour:
   cameraColor: {r: 0.08, g: 0.1, b: 0.05, a: 1}
   route: []
   secondRoute: []
-  secondRouteFromYear: 4
   paintedSpots: []
   extraSpots: []
   props: []

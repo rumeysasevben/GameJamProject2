@@ -31,7 +31,7 @@ namespace TenCandles.Core
         // Mastery passives, granted by Stay with the mastery tower and kept for the rest of the run (§5.1).
         public const int   LongSummerCandles       = 1;      // Childhood: MaxCandlesAdd
         public const float BoundlessEnergyFireRate = 0.15f;  // Youth: TowerFireRateMul
-        public const float SavingsKillReward       = 0.20f;  // Adulthood: KillRewardMul
+        public const int   EstablishedTowerCapacity = 1;     // Adulthood: TowerCapacityAdd
 
         // ---------- Wave scaling ----------
         // d = stage index 0..3 (difficulty tier, NOT which biome)
@@ -66,6 +66,8 @@ namespace TenCandles.Core
         // ---------- Wish ----------
         // candles blown -> tier. Cost = candles * SecondsPerCandle
         public static readonly int[] WishCandleOptions = { 0, 1, 3, 5 };
+        // Gifts offered by a wish (§6), drawn from the blown tier's own Lifetime pool (5 gifts per tier).
+        public const int WishGiftChoices = 3;
 
         // ---------- Wind ----------
         public const float WindTelegraphSeconds = 3f;

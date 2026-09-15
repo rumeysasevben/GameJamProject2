@@ -32,7 +32,7 @@ MonoBehaviour:
   good: {r: 0.55, g: 1, b: 0.6, a: 1}
   common: {r: 0.78, g: 0.77, b: 0.74, a: 1}
   rare: {r: 0.4, g: 0.75, b: 1, a: 1}
-  legendary: {r: 1, g: 0.74, b: 0.2, a: 1}
+  epic: {r: 1, g: 0.74, b: 0.2, a: 1}
   disabled: {r: 0.27, g: 0.27, b: 0.27, a: 0.95}
   flameColor: {r: 1, g: 1, b: 1, a: 1}
   waxOut: {r: 0.45, g: 0.44, b: 0.42, a: 1}

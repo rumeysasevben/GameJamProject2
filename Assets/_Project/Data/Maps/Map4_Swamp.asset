@@ -41,7 +41,6 @@ MonoBehaviour:
   - {x: 1600, y: 700}
   - {x: 1630, y: 850}
   - {x: 1630, y: 1000}
-  secondRouteFromYear: 4
   paintedSpots:
   - {x: 800, y: 460}
   - {x: 360, y: 770}

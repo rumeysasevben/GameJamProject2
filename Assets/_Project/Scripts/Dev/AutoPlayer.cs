@@ -20,9 +20,17 @@ namespace TenCandles
         // Set by AutoTestRunner with -bot.shots; receives a file tag.
         public System.Action<string> Snapshot;
 
-        const int BirthdayHoldFrames = 6;
+        // With -bot.shots only, in real seconds: the overlays animate on unscaled time, and batch mode runs
+        // frames far faster than real time. The birthday waits for the wish outro to fade off it; the gifts wait
+        // for the blow-out animation.
+        const float BirthdayShotSeconds = 1.2f;
+        const float WishCandlesShotSeconds = 0.6f;
+        const float WishGiftsShotSeconds = 2.2f;
+        float holdSince = -1f;
+        // -bot.wish=max (default): the most candles that still leave reserveSeconds. -bot.wish=0|1|3|5: that many when legal.
+        public string wish = "max";
         const int StageShotFrames = 30;
-        int birthdayFrames, stageShotIn;
+        int stageShotIn;
         bool laneShotTaken;
 
         readonly StringBuilder report = new StringBuilder();
@@ -59,6 +67,7 @@ namespace TenCandles
             GameEvents.TowerBuilt += OnTowerBuilt;
             GameEvents.EnemyKilled += OnKilled;
             GameEvents.StateChanged += OnStateChanged;
+            GameEvents.TimeOverflow += OnOverflow;
         }
 
         void OnDisable()
@@ -70,6 +79,7 @@ namespace TenCandles
             GameEvents.TowerBuilt -= OnTowerBuilt;
             GameEvents.EnemyKilled -= OnKilled;
             GameEvents.StateChanged -= OnStateChanged;
+            GameEvents.TimeOverflow -= OnOverflow;
         }
 
         void OnTowerBuilt(Tower t) => built.Add(t);
@@ -100,15 +110,14 @@ namespace TenCandles
                 Snapshot($"stage{s.TierIndex}_{s.Stage.ToString().ToLowerInvariant()}");
             }
 
+            if (gm.State == GameState.Wish)
+            {
+                PlayWish(gm);
+                return;
+            }
             if (gm.State == GameState.Birthday)
             {
-                // Hold the screen for a few frames so it is drawn before it can be captured.
-                if (Snapshot != null && ++birthdayFrames < BirthdayHoldFrames)
-                {
-                    if (birthdayFrames == BirthdayHoldFrames - 1) Snapshot($"birthday_{gm.Age}");
-                    return;
-                }
-                birthdayFrames = 0;
+                if (HoldForShot(BirthdayShotSeconds, $"birthday_{gm.Age}")) return;
                 stageShotIn = StageShotFrames;
                 var slot = gm.Lifetime.CurrentSlot;
                 // -bot.life=SAS: the Stay / Advance sequence to play. Advance when not given or not legal.
@@ -234,6 +243,63 @@ namespace TenCandles
             }
         }
 
+        void PlayWish(GameManager gm)
+        {
+            WishSystem system = gm.Lifetime.Wish;
+            var clock = CandleClock.Instance;
+
+            if (system.CurrentOffer == null)
+            {
+                if (HoldForShot(WishCandlesShotSeconds, $"wish_{gm.Age}_candles")) return;
+
+                WishOption[] options = system.Options();
+                int candles = 0;
+                foreach (var o in options)
+                {
+                    bool wanted = wish == "max" ? clock.TimeRemaining - o.Cost >= reserveSeconds : o.Candles.ToString() == wish;
+                    if (o.Legal && wanted && o.Candles >= candles) candles = o.Candles;
+                }
+                report.AppendLine($"    wish at {gm.Age}: time {clock.TimeRemaining:0.0}s, options {string.Join(", ", options.Select(o => $"{o.Candles} {(o.Legal ? "legal" : "illegal (" + o.BlockedReason + ")")}"))}");
+                float before = clock.TimeRemaining;
+                gm.BlowWishCandles(candles);
+                if (candles == 0) report.AppendLine("    wished for nothing: 0 candles");
+                else report.AppendLine($"    blew {candles} ({WishSystem.TierFor(candles)}): {before:0.0}s -> {clock.TimeRemaining:0.0}s, gifts [{string.Join(", ", system.CurrentOffer.Select(c => c.title))}]");
+                return;
+            }
+
+            if (HoldForShot(WishGiftsShotSeconds, $"wish_{gm.Age}_gifts")) return;
+
+            UpgradeCard[] offer = system.CurrentOffer;
+            int pick = 0, bestRank = int.MaxValue;
+            for (int i = 0; i < offer.Length; i++)
+            {
+                int rank = System.Array.IndexOf(CardPriority, offer[i].effect);
+                if (rank >= 0 && rank < bestRank)
+                {
+                    bestRank = rank;
+                    pick = i;
+                }
+            }
+            WishGiftTier tier = system.PendingTier;
+            UpgradeCard card = offer[pick];
+            gm.ChooseWishGift(pick);
+            report.AppendLine($"    gift: {card.title} ({tier} {card.effect} {card.value:0.##}), candle cap {clock.CandleCap}, time {clock.TimeRemaining:0.0}s, wishes made {gm.Lifetime.Run.WishesMade}");
+        }
+
+        // True while a -bot.shots screenshot is being waited for; takes it once the screen has had `seconds` of real time.
+        bool HoldForShot(float seconds, string tag)
+        {
+            if (Snapshot == null) return false;
+            if (holdSince < 0f) holdSince = Time.unscaledTime;
+            if (Time.unscaledTime - holdSince < seconds) return true;
+            Snapshot(tag);
+            holdSince = -1f;
+            return false;
+        }
+
+        void OnOverflow(float wasted) => wastedThisYear += wasted;
+        float wastedThisYear;
+
         void OnLeaked(Enemy e)
         {
             leaksThisYear++;
@@ -247,9 +313,10 @@ namespace TenCandles
             string build = string.Join(" ", towers.OrderBy(t => t.Data.kind).ThenBy(t => built.IndexOf(t)).Select(t => $"{Code(t.Data.kind)}{t.Level}"));
             var bm = BuildManager.Instance;
             var clock = CandleClock.Instance;
-            report.AppendLine($"Age {year,2} cleared | time {clock.TimeRemaining,6:0.0}s | candles {clock.CandleCap,2} | towers {bm.TowersBuilt}/{bm.TowerCapacity} | lanes {string.Join("/", WaveManager.Instance.SpawnedPerLane)} | kills +{killIncome,5:0.0}s | leaks {leaksThisYear} | raw DPS {dps,6:0.0} | {build}");
+            report.AppendLine($"Age {year,2} cleared | time {clock.TimeRemaining,6:0.0}s | candles {clock.CandleCap,2} | towers {bm.TowersBuilt}/{bm.TowerCapacity} | lanes {string.Join("/", WaveManager.Instance.SpawnedPerLane)} | kills +{killIncome,5:0.0}s | leaks {leaksThisYear} | wasted {wastedThisYear,5:0.0}s | raw DPS {dps,6:0.0} | {build}");
             leaksThisYear = 0;
             killIncome = 0f;
+            wastedThisYear = 0f;
         }
 
         float killIncome;
@@ -268,11 +335,11 @@ namespace TenCandles
         {
             var gm = GameManager.Instance;
             report.AppendLine(victory
-                ? $"VICTORY with {CandleClock.Instance.TimeRemaining:0.0}s left, {leaksTotal} leaks, game time {Time.timeSinceLevelLoad:0}s, life {BirthdayController.Code(gm.Lifetime.Run.Choices)} = {BirthdayController.LifeName(gm.Lifetime.Run.Choices)}, stages [{string.Join(", ", gm.Lifetime.Run.Slots.Select(s => s.Stage))}], masteries [{string.Join(", ", gm.Lifetime.Run.Masteries)}], passives [{string.Join(", ", BirthdayController.Passives(gm.Lifetime.Run).Select(p => p.Name))}], seed {gm.Lifetime.Run.Seed}, kill reward ×{StatRegistry.KillRewardMultiplier:0.00}, fire rate ×{StatRegistry.FireRateMultiplier:0.00}"
+                ? $"VICTORY with {CandleClock.Instance.TimeRemaining:0.0}s left, {leaksTotal} leaks, game time {Time.timeSinceLevelLoad:0}s, life {BirthdayController.Code(gm.Lifetime.Run.Choices)} = {BirthdayController.LifeName(gm.Lifetime.Run.Choices)}, stages [{string.Join(", ", gm.Lifetime.Run.Slots.Select(s => s.Stage))}], masteries [{string.Join(", ", gm.Lifetime.Run.Masteries)}], passives [{string.Join(", ", BirthdayController.Passives(gm.Lifetime.Run).Select(p => p.Name))}], wishes {gm.Lifetime.Run.WishesMade}, seed {gm.Lifetime.Run.Seed}, kill reward ×{StatRegistry.KillRewardMultiplier:0.00}, kill bonus +{StatRegistry.KillBonus:0.##}s, damage ×{StatRegistry.DamageMultiplier:0.00}, fire rate ×{StatRegistry.FireRateMultiplier:0.00}, tower capacity +{StatRegistry.TowerCapacityBonus}"
                 : $"DEFEAT at age {gm.Age} ({leaksTotal} leaks, {WaveManager.Instance.Remaining} guests still coming), game time {Time.timeSinceLevelLoad:0}s, life so far {BirthdayController.Code(gm.Lifetime.Run.Choices)}, seed {gm.Lifetime.Run.Seed}");
             if (!victory)
             {
-                report.AppendLine($"    state before defeat: {previousState}, wave running {WaveManager.Instance.IsRunning}, alive counter {WaveManager.Instance.Alive}, timeScale {Time.timeScale}, dt {Time.deltaTime}, birthday hold frame {birthdayFrames}");
+                report.AppendLine($"    state before defeat: {previousState}, wave running {WaveManager.Instance.IsRunning}, alive counter {WaveManager.Instance.Alive}, timeScale {Time.timeScale}, dt {Time.deltaTime}");
                 foreach (var e in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
                     report.AppendLine($"    on map: {e.Data.displayName}: alive {e.IsAlive}, targetable {e.IsTargetable}, progress {e.PathProgress:0.0}");
             }

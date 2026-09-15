@@ -6,7 +6,9 @@ namespace TenCandles
     {
         Common,
         Rare,
-        Legendary
+        Epic,
+        // Only ever offered by a wish (§6, §11.3).
+        Lifetime
     }
 
     // Values are appended, never reordered: card assets store them as numbers.
@@ -19,7 +21,7 @@ namespace TenCandles
         BuildCost,      // Bulk Buy
         WaveEndBonus,   // Anniversary
         LeakShield,     // Sturdy Door
-        ExtraCandle,    // The Eleventh Candle (value = candles)
+        ExtraCandle,    // The Eleventh Candle (value = candles; raises the cap, the new candles start unlit)
         Crit,           // Critical Celebration
         Chain,          // Chain Reaction
         SplashRadius,   // Big Bang
@@ -35,7 +37,8 @@ namespace TenCandles
         ArmorPierce,    // Armor Breaker
         Blessing,       // Farum's Blessing: damage and fire rate
         SlowBurn,       // Slow-Burning Wax: candles drain slower
-        KillRewardMul   // multiplies the time every kill gives (spec: UpgradeEffectType.KillRewardMul)
+        KillRewardMul,  // multiplies the time every kill gives (spec: UpgradeEffectType.KillRewardMul)
+        TowerCapacityAdd // more towers allowed at every age (spec: UpgradeEffectType.TowerCapacityAdd)
     }
 
     [CreateAssetMenu(menuName = "Ten Candles/Upgrade Card", fileName = "Card")]
@@ -49,6 +52,8 @@ namespace TenCandles
         [Tooltip("Tower kind for KindDamage and KindFireRate.")]
         public TowerKind kind;
         public int maxStacks = 1;
+        [Tooltip("Lifetime cards only: the wish tier whose pool offers this gift (§6).")]
+        public Lifetime.WishGiftTier giftTier;
         public Sprite icon;
     }
 }

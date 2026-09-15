@@ -41,6 +41,8 @@ namespace TenCandles
             var overlayRoot = (RectTransform)overlay.transform;
             overlayRoot.gameObject.AddComponent<LevelUpUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<BirthdayUI>().Build(overlayRoot);
+            // After the birthday screen, so the wish draws on top and its outro fades out over it.
+            overlayRoot.gameObject.AddComponent<WishUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<MainMenuUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<PauseMenuUI>().Build(overlayRoot);
             overlayRoot.gameObject.AddComponent<EndScreenUI>().Build(overlayRoot);

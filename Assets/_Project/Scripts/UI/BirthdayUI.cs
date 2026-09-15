@@ -97,7 +97,7 @@ namespace TenCandles
             subtitle.text = $"{Story.Hero} turns {age}. How will the next ten years go?";
             detail.text =
                 $"Ages {age + 1}-{age + Balance.YearsPerDecade}   ·   Candles {Candles(nextTier, current.TierIndex)}   ·   " +
-                $"Towers allowed {LifetimeManager.TowerCapacityFor(age + 1)}" +
+                $"Towers allowed {LifetimeManager.TowerCapacityFor(age + 1) + StatRegistry.TowerCapacityBonus}" +
                 (waves != null ? $"   ·   Roads {waves.ActiveLanes(age + 1)}" : "");
 
             DecadeStage stayStage = current.Stage;

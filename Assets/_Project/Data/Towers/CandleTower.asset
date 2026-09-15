@@ -17,6 +17,8 @@ MonoBehaviour:
   kind: 1
   description: Weak hits, but you burn and slow monsters. Keep them inside your Spike
     Mortar's blast.
+  unlock: 0
+  unlockStage: 0
   baseCost: 30
   damage: 3
   fireRate: 1.4

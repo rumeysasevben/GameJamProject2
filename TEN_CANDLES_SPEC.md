@@ -158,7 +158,7 @@ namespace TenCandles.Core
 
         public const float BoundlessEnergyFireRate \= 0.15f;  // Youth: TowerFireRateMul
 
-        public const float SavingsKillReward       \= 0.20f;  // Adulthood: KillRewardMul
+        public const int   EstablishedTowerCapacity \= 1;     // Adulthood: TowerCapacityAdd
 
         // \---------- Wave scaling \----------
 
@@ -219,6 +219,8 @@ namespace TenCandles.Core
         // candles blown \-\> tier. Cost \= candles \* SecondsPerCandle
 
         public static readonly int\[\] WishCandleOptions \= { 0, 1, 3, 5 };
+
+        public const int WishGiftChoices \= 3;         // gifts offered by a wish, drawn from the blown tier's own pool of 5 (§6)
 
         // \---------- Wind \----------
 
@@ -328,13 +330,13 @@ public sealed class CandleClock : MonoBehaviour
 
 - `0 <= TimeRemaining <= MaxTime` at all times.  
 - `MaxTime == CandleCap * Balance.SecondsPerCandle`.  
-- `TrySpend` returns false and changes nothing if `seconds > TimeRemaining`.  
+- `TrySpend` returns false and changes nothing if `seconds >= TimeRemaining`. Spending exactly the time you have left would put out the last candle and end the run, so it is refused; you always need **more** than the cost. `CanAfford(seconds)` is the same check (`TimeRemaining > seconds`) for UI and rules that must decide before spending (tower builds, upgrades, wishes). This matches the code since v1.  
 - `Add` never raises `TimeRemaining` above `MaxTime`; the discarded amount is reported via `GameEvents.TimeOverflow(float wasted)` for telemetry and UI feedback.  
 - Lowering `CandleCap` clamps `TimeRemaining` down to the new `MaxTime` immediately.
 
 ### 3.3 Candle visualisation
 
-`CandleBarUI` renders `CandleCap` candle objects. **Do not hardcode 10** — the cap changes per stage (§2) and the `EleventhCandle` card can raise it.
+`CandleBarUI` renders `CandleCap` candle objects. **Do not hardcode 10** — the cap changes per stage (§2) and the `EleventhCandle` card can raise it. A candle added by raising the cap starts unlit (§11.1).
 
 for i in 0 .. CandleCap-1:
 
@@ -458,9 +460,11 @@ Triggered after the year-10 card pick of each decade, i.e. at ages 10, 20, 30\. 
 | :---- | :---- | :---- | ----: |
 | Childhood | **Long Summer** | `MaxCandlesAdd` | \+1 (`LongSummerCandles`) |
 | Youth | **Boundless Energy** | `TowerFireRateMul` | \+0.15 (`BoundlessEnergyFireRate`) |
-| Adulthood | **Savings** | `KillRewardMul` | \+0.20 (`SavingsKillReward`) |
+| Adulthood | **Established** | `TowerCapacityAdd` | \+1 (`EstablishedTowerCapacity`) |
 
-A Long Summer candle is a bonus candle: it sits on top of `TierCandleCap` at every later tier, like a card-granted candle.
+A Long Summer candle is a bonus candle: it sits on top of `TierCandleCap` at every later tier, like a card-granted candle. An Established tower slot likewise sits on top of `TowerCapacity(age)` at every later age.
+
+> Established replaced **Savings** (`KillRewardMul` \+0.20) after the Phase 2 baseline (`balance/baseline_phase2.md`): the wallet sat at its cap for 7 of the 9 recorded years of that decade, so extra kill income was discarded.
 
 **Old Age payoff.** Old Age is the only stage with no Stay option and only `A A A` reaches it, so entering it grants **both** of its towers (`memory_lantern` and `hourglass`) as visit towers. This gives the one life with no masteries a concrete reward, and no tower in §9.2 is unreachable.
 
@@ -475,7 +479,7 @@ Enumerate these in a test. `S` \= Stay, `A` \= Advance.
 | Choices | Composition | Name | Masteries | Passives | Visit towers |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | `A A A` | Childhood · Youth · Adulthood · OldAge | **Full Life** | none | none | whistle, music\_box, camera\_flash, memory\_lantern, hourglass |
-| `A A S` | Childhood · Youth · Adulthood × 2 | **Late Bloomer** | champagne | Savings | whistle, music\_box, camera\_flash |
+| `A A S` | Childhood · Youth · Adulthood × 2 | **Late Bloomer** | champagne | Established | whistle, music\_box, camera\_flash |
 | `A S A` | Childhood · Youth × 2 · Adulthood | **Long Youth** | searchlight | Boundless Energy | whistle, music\_box, camera\_flash |
 | `S A A` | Childhood × 2 · Youth · Adulthood | **Slow Childhood** | balloon\_trap | Long Summer | whistle, music\_box, camera\_flash |
 | `S A S` | Childhood × 2 · Youth × 2 | **Never Grew Up** | balloon\_trap, searchlight | Long Summer, Boundless Energy | whistle, music\_box |
@@ -496,6 +500,7 @@ Implemented:
 | `CandleRestored` | (int index) | |
 | `CandleCountChanged` | (int newCap) | the candle cap changed (tier change or card) |
 | `TimeRanOut` | () | |
+| `TimeOverflow` | (float wasted) | seconds `Add` discarded at `MaxTime` (§3.2) |
 | `StateChanged` | (GameState state) | |
 | `WaveStarted` | (int age) | tier and year in decade derive from age |
 | `WaveCleared` | (int age) | |
@@ -504,6 +509,8 @@ Implemented:
 | `BirthdayOffered` | (bool stayLegal, bool advanceLegal) | reasons are on `LifetimeManager.Options` |
 | `BirthdayChosen` | (BirthdayChoice choice, DecadeStage newStage) | |
 | `StageChanged` | (DecadeStage stage, int tier) | |
+| `WishCandlesBlown` | (int candles) | the blow-out moment (1, 3 or 5), after the spend and before the gift pick; drives VFX and audio |
+| `WishResolved` | (int candlesBlown, WishGift gift) | once per wish, including 0 candles (gift null) |
 | `EnemySpawned` | (Enemy e) | |
 | `EnemyDamaged` | (Enemy e, float amount, bool crit) | |
 | `EnemyKilled` | (Enemy e, float reward) | reward already includes `KillRewardMul` |
@@ -520,8 +527,6 @@ Planned, added by the phase that needs them, same convention:
 
 | Event | Arguments | Phase |
 | :---- | :---- | :---- |
-| `TimeOverflow` | (float wasted) | 3 |
-| `WishResolved` | (int candlesBlown, WishGift gift) | 3 |
 | `WindWarning` | (float seconds) | 6 |
 | `WindStarted` | (float duration) | 6 |
 | `WindEnded` | () | 6 |
@@ -541,10 +546,53 @@ Shown at each birthday, **before** the Stay/Advance screen.
 
 Rules:
 
-- An option is selectable only if `CandleClock.TimeRemaining >= cost`.  
-- The gift is a `UpgradeCard` drawn from the `Lifetime` rarity pool (§11), which is **only** reachable through wishes.  
+- An option is selectable only if `CandleClock.CanAfford(cost)`, i.e. `TimeRemaining > cost`. You need **more** than the cost: a wish can never spend your last second and end the run. A wish that kills you is a trap, not a decision. This is the same check `TrySpend` makes (§3.2).  
+- The gift is a `UpgradeCard` of rarity `Lifetime` (§11), which is **only** reachable through wishes. Each tier has its **own pool**; a wish offers `Balance.WishGiftChoices` (3) distinct gifts from the pool of the tier blown. Tiers are separate pools, not multipliers: a gift is applied at its own `value`.  
 - The spend goes through `CandleClock.TrySpend(cost, "wish")`.  
 - `GameEvents.WishResolved` fires in all cases, including 0 candles.
+
+**Invariant: no Wish gift may grant time or candle capacity.** The Wish trades lifespan for power; a gift that returns time inverts the trade. Forbidden effects: `MaxCandlesAdd`, `KillRewardAdd`, `KillRewardMul`, `WaveClearBonusAdd`, `ReviveOnce`, `DrainRateMul`, `LeakPenaltyAdd`, and any instant time grant (code: `ExtraCandle`, `KillBonus`, `KillRewardMul`, `WaveEndBonus`, `LastBreath`, `SlowBurn`, `LeakShield`, `InstantTime`). `WishSystem.GrantsTime(effect)` is the check: such a card is left out of the gift pool with a warning, and a test asserts the shipped gift data never uses one.
+
+### 6.1 Gift pools
+
+Five gifts per tier, 15 in total, so an offer of three actually varies. All use effects that already exist; no gift needs new machinery. Every gift has `maxStacks = 1`.
+
+- **Small (1 candle):** a solid single effect, roughly Rare card strength.
+- **Large (3 candles):** clearly above any card.
+- **Legendary (5 candles):** changes how you play.
+
+| Tier | id | Name | Effect (code `CardEffect` → §11.1 `UpgradeEffectType`) | Value |
+| :---- | :---- | :---- | :---- | ----: |
+| Small | `warm_glow` | Warm Glow | `Damage` → TowerDamageMul | \+0.25 |
+| Small | `eager_hands` | Eager Hands | `FireRate` → TowerFireRateMul | \+0.20 |
+| Small | `clear_sight` | Clear Sight | `Range` → TowerRangeMul | \+0.25 |
+| Small | `lucky_candle` | Lucky Candle | `Crit` → CritChanceAdd | \+0.12 |
+| Small | `big_balloons` | Big Balloons | `SplashRadius` → SplashRadiusMul | \+0.35 |
+| Large | `legacy_flame` | Legacy Flame | `Damage` → TowerDamageMul | \+0.45 |
+| Large | `open_house` | Open House | `TowerCapacityAdd` → TowerCapacityAdd | \+1 |
+| Large | `restless_hands` | Restless Hands | `FireRate` → TowerFireRateMul | \+0.40 |
+| Large | `golden_luck` | Golden Luck | `Crit` → CritChanceAdd | \+0.25 |
+| Large | `drumroll` | Drumroll | `KindFireRate` (`confetti_cannon`) → TowerFireRateMul | \+0.75 |
+| Legendary | `true_aim` | True Aim | `ArmorPierce` → *see note* | all shots ignore armour |
+| Legendary | `crowded_table` | Crowded Table | `TowerCapacityAdd` → TowerCapacityAdd | \+2 |
+| Legendary | `lucky_stars` | Lucky Stars | `Crit` → CritChanceAdd | \+0.50 |
+| Legendary | `housewarming` | Housewarming | `FreeTower` → FreeTowerGrant | 3 |
+| Legendary | `grand_finale` | Grand Finale | `KindDamage` (`firework_launcher`) → TowerDamageMul | \+1.50 |
+
+For comparison, the strongest yearly cards are Farum's Blessing (Epic: +0.35 damage, +0.175 fire rate) and Meteor Mortar (Epic: +0.80 damage for one tower kind).
+
+Where the Legendary tier departs from the design examples, because the effect does not exist in code yet (§18 Q7):
+
+- *"Crits at ×3"* needs `CritMultiplierAdd`. The code's crit damage is a constant ×2.5 (`StatRegistry.CritDamageMultiplier`), so Lucky Stars raises crit **chance** to +0.50 instead.
+- *"A free max-level tower"* needs a level on `FreeTowerGrant`. The code's `FreeTower` grants a free level-1 build, so Housewarming grants 3.
+- *"Pierce on all towers."* §11.1's `PierceAdd` (projectiles pass through) is not implemented. True Aim uses the code's `ArmorPierce`: every tower's damage ignores armour. If the player already owns the Rare card Armor Breaker, True Aim does nothing.
+
+As implemented (Phase 3):
+
+- **Flow.** `GameState.Wish` is entered after the year-10 card pick. Picking 1/3/5 candles spends them at once (`TrySpend(cost, "wish")`), raises `WishCandlesBlown(candles)` and offers up to `Balance.WishGiftChoices` gifts from that tier; picking a gift applies it through `UpgradeEffect` (so it lasts the run) and raises `WishResolved`. Picking 0 raises `WishResolved(0, null)` at once. Then `Birthday`.
+- **Pool.** Gifts live in the `LevelUpManager` pool with rarity `Lifetime` and a `giftTier`, and are filtered out of yearly offers. A taken gift is excluded at `maxStacks`. An option whose tier has no gifts left is disabled with a reason. With 5 per tier and 3 wishes per run, every offer is a full 3.
+- **Draw.** Gifts are drawn with `RunState.Rng` (§11.3). With 5 candidates for 3 slots every wish draws, so a run that wishes differently from another also sees different card offers and wave shuffles afterwards. When there are no more candidates than slots, all are offered in pool order without touching the RNG.
+- **`WishesMade`** counts wishes with at least one candle.
 
 Design intent: this is the signature moment of the game. Blowing out candles must be spectacular — VFX, audio, a hard beat — because the player is trading lifespan for power.
 
@@ -894,6 +942,12 @@ public enum UpgradeEffectType
 
 All effects funnel into `StatRegistry`, a single struct of global multipliers that `Tower` reads when computing its stats. No card writes to a `Tower` directly.
 
+**`MaxCandlesAdd` raises the cap, never fills it.** New candles appear unlit, and the player still has to earn the seconds to light them. Raising `CandleCap` changes `MaxTime` only; `TimeRemaining` is untouched. (Code: `CandleClock.AddCandle`, used by `CardEffect.ExtraCandle`.)
+
+Wish gifts are Lifetime cards with one extra field, `giftTier` (Small / Large / Legendary), which names the tier pool that offers them (§6). It is `None` for every other card.
+
+Rarity naming: the code's third rarity was called `Legendary` and is now `Epic`, matching this schema, so it no longer collides with the Legendary wish tier.
+
 ### 11.2 Card pool (starter set — expand toward 40+)
 
 | id | Rarity | Effect | Value | Max |
@@ -920,9 +974,8 @@ All effects funnel into `StatRegistry`, a single struct of global multipliers th
 | `long_exposure` | Epic | FreezeDurationAdd (`camera_flash`) | \+0.6 s | 1 |
 | `borrowed_time` | Epic **curse** | TowerDamageMul \+0.60 / MaxCandlesAdd −1 | — | 1 |
 | `reckless_youth` | Epic **curse** | TowerFireRateMul \+0.40 / LeakPenaltyAdd \+15 s | — | 1 |
-| `second_wind` | Lifetime | MaxCandlesAdd | \+2 | 1 |
-| `legacy_flame` | Lifetime | TowerDamageMul | \+0.45 | 1 |
-| `endless_party` | Lifetime | KillRewardAdd | \+1.2 s | 1 |
+
+Lifetime cards (the wish gifts) are listed in §6.1, five per tier. `second_wind` (MaxCandlesAdd) and `endless_party` (KillRewardAdd) were removed: they broke the §6 invariant that no gift may grant time or candle capacity. `legacy_flame` is now a Large gift.
 
 ### 11.3 Draw rules
 
@@ -1180,7 +1233,10 @@ Flag these to Rumeysa rather than deciding alone:
 1. Does `Stay` reuse the same path variant, or reroll it? (Spec assumes reroll.)  
 2. Should masteries carry across runs via Legacy, or stay run-local? (Spec assumes run-local.)  
 3. Should `OldAge` be reachable through a Legacy unlock on non-`A A A` paths? (Spec says no — its rarity is the point.)  
-4. Controller support: Phase 5 or after Phase 9?
+4. Controller support: Phase 5 or after Phase 9?  
+5. ~~**Wish gift tiers** (§6)~~ **Resolved:** tiers are separate pools of 5 gifts each, not value multipliers, and no gift may grant time or candle capacity. See §6 and §6.1.  
+6. ~~**Wish affordability at exact equality**~~ **Resolved:** strict. You need more than the cost, so a wish can never spend your last second. §6 and §3.2 now say so.  
+7. **Legendary gift effects that don't exist in code** (§6.1): `CritMultiplierAdd` (crit ×3), a level on `FreeTowerGrant` (a free max-level tower) and `PierceAdd` (projectiles pass through) are in §11.1 but not implemented. Lucky Stars, Housewarming and True Aim use the nearest existing effects. Should those three effects be built, and in which phase?
 
    and when unity is close , you can make test
 

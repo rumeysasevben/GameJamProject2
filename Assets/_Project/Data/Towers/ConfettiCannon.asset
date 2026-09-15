@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Stone Thrower
   kind: 0
   description: Cheap and quick. You hit one monster at a time.
+  unlock: 0
+  unlockStage: 0
   baseCost: 20
   damage: 5
   fireRate: 2.3

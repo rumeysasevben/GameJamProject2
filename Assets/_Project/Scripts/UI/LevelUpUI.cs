@@ -19,7 +19,7 @@ namespace TenCandles
             public Text description;
             public Text stacks;
             public CardHover hover;
-            public bool legendary;
+            public bool epic;
         }
 
         RectTransform panel;
@@ -118,7 +118,7 @@ namespace TenCandles
                 UpgradeCard card = cards[i];
                 Color rarityColor = RarityColor(card.rarity);
                 v.rarity.text = card.rarity.ToString().ToUpperInvariant();
-                v.legendary = card.rarity == CardRarity.Legendary;
+                v.epic = card.rarity == CardRarity.Epic;
                 v.rarity.color = rarityColor;
                 v.content.GetComponent<Outline>().effectColor = rarityColor;
                 v.title.text = card.title;
@@ -133,7 +133,7 @@ namespace TenCandles
 
         Color RarityColor(CardRarity rarity) => rarity switch
         {
-            CardRarity.Legendary => skin.legendary,
+            CardRarity.Epic => skin.epic,
             CardRarity.Rare => skin.rare,
             _ => skin.common
         };
@@ -153,11 +153,11 @@ namespace TenCandles
             for (int i = 0; i < offer.Length && i < Slots; i++)
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i)) Choose(i);
 
-            // Legendary cards shimmer so they read as special at a glance.
+            // Epic cards shimmer so they read as special at a glance.
             float glow = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5f);
             for (int i = 0; i < offer.Length && i < Slots; i++)
-                if (views[i].legendary)
-                    views[i].content.GetComponent<Outline>().effectColor = Color.Lerp(skin.legendary, Color.white, glow * 0.6f);
+                if (views[i].epic)
+                    views[i].content.GetComponent<Outline>().effectColor = Color.Lerp(skin.epic, Color.white, glow * 0.6f);
 
             float t = Mathf.Clamp01((Time.unscaledTime - openedAt) / 0.35f);
             for (int i = 0; i < Slots; i++)

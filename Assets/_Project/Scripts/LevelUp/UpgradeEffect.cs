@@ -40,6 +40,7 @@ namespace TenCandles
                     break;
                 case CardEffect.SlowBurn: StatRegistry.DrainMultiplier = Mathf.Max(0.3f, StatRegistry.DrainMultiplier - v); break;
                 case CardEffect.KillRewardMul: StatRegistry.KillRewardMultiplier += v; break;
+                case CardEffect.TowerCapacityAdd: StatRegistry.TowerCapacityBonus += Mathf.RoundToInt(v); break;
             }
         }
     }

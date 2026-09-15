@@ -15,7 +15,8 @@ namespace TenCandles.Lifetime
         public RunState Run { get; private set; }
         public DecadeSlot CurrentSlot => Run?.CurrentSlot;
         public int Age => Run != null ? Run.CurrentAge : 0;
-        public int TowerCapacity => TowerCapacityFor(Mathf.Max(1, Age));
+        // Age-derived capacity plus any TowerCapacityAdd bonus (the Established passive).
+        public int TowerCapacity => TowerCapacityFor(Mathf.Max(1, Age)) + StatRegistry.TowerCapacityBonus;
         // Options for the birthday on screen; only meaningful in GameState.Birthday.
         public BirthdayOptions Options { get; private set; }
 
@@ -45,9 +46,13 @@ namespace TenCandles.Lifetime
         // Birthdays close decades 1-3; the end of the fourth decade is the end of the run.
         public static bool IsBirthdayAge(int age) => age > 0 && age % Balance.YearsPerDecade == 0 && age < Balance.TotalYears;
 
+        // The wish shown before each birthday (§6). Its gifts come from the Lifetime cards in the card pool.
+        public WishSystem Wish { get; private set; }
+
         public void BeginRun(int seed)
         {
             Run = BirthdayController.NewRun(seed);
+            Wish = new WishSystem(Run, LevelUpManager.Instance != null ? LevelUpManager.Instance.Pool : null, CandleClock.Instance);
             EnterSlot(Run.Slots[0]);
         }
 

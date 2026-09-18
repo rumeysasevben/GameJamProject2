@@ -100,7 +100,7 @@ namespace TenCandles.Lifetime
         // Slot 0 is always Childhood.
         public static RunState NewRun(int seed)
         {
-            var run = new RunState { Seed = seed, CurrentAge = 1, Rng = new Random(seed), CombatRng = new Random(unchecked(seed * 31 + 7)) };
+            var run = new RunState { Seed = seed, CurrentAge = 1, Rng = new Random(seed), CombatRng = new Random(unchecked(seed * 31 + 7)), WishRng = new Random(unchecked(seed * 31 + 13)) };
             run.Slots[0] = MakeSlot(0, DecadeStage.Childhood, false);
             run.VisitedStages.Add(DecadeStage.Childhood);
             return run;

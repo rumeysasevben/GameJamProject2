@@ -41,6 +41,20 @@ namespace TenCandles.Lifetime
         // Indexed by tier, not stage: the shrinking cap is ageing, so Stay cannot dodge it.
         public static int CandleCapFor(int tier) => Balance.TierCandleCap[Mathf.Clamp(tier, 0, Balance.TierCandleCap.Length - 1)];
 
+        // §2/§6: the candle bar in a run. Tier cap, plus bonus candles from cards and passives, minus every candle
+        // wished away. Wish legality keeps it at WishMinCandleCap or above; the floor here is only a safety net.
+        public static int RunningCandleCap(int tier, int bonusCandles, int candlesWished)
+            => Mathf.Max(Balance.WishMinCandleCap, CandleCapFor(tier) + bonusCandles - candlesWished);
+
+        // Recomputes the clock's cap for the current tier, after a wish or a MaxCandlesAdd.
+        public void RefreshCandleCap() => ApplyCandleCap(Run.CurrentTier);
+
+        void ApplyCandleCap(int tier)
+        {
+            var clock = CandleClock.Instance;
+            if (clock != null && Run != null) clock.SetCandleCap(RunningCandleCap(tier, StatRegistry.BonusCandles, Run.CandlesWished));
+        }
+
         public static int ActiveLanes(int mapEntrances, int tier) => WaveGenerator.ActiveLanes(mapEntrances, tier);
 
         // Birthdays close decades 1-3; the end of the fourth decade is the end of the run.
@@ -52,7 +66,7 @@ namespace TenCandles.Lifetime
         public void BeginRun(int seed)
         {
             Run = BirthdayController.NewRun(seed);
-            Wish = new WishSystem(Run, LevelUpManager.Instance != null ? LevelUpManager.Instance.Pool : null, CandleClock.Instance);
+            Wish = new WishSystem(Run, LevelUpManager.Instance != null ? LevelUpManager.Instance.Pool : null, RefreshCandleCap);
             EnterSlot(Run.Slots[0]);
         }
 
@@ -83,15 +97,7 @@ namespace TenCandles.Lifetime
 
         void EnterSlot(DecadeSlot slot)
         {
-            var clock = CandleClock.Instance;
-            if (clock != null)
-            {
-                // Candles granted by cards stay on top of the tier cap.
-                int previousCap = slot.TierIndex > 0 ? CandleCapFor(slot.TierIndex - 1) : Balance.BaseCandleCount;
-                int bonus = Mathf.Max(0, clock.CandleCap - previousCap);
-                clock.SetCandleCap(CandleCapFor(slot.TierIndex) + bonus);
-            }
-
+            ApplyCandleCap(slot.TierIndex);
             GameEvents.RaiseStageChanged(slot.Stage, slot.TierIndex);
         }
     }

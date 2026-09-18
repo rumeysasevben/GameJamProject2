@@ -58,7 +58,7 @@ namespace TenCandles
             var seenLastTime = new List<UpgradeCard>();
             foreach (var card in pool)
             {
-                if (card == null || Stacks(card) >= card.maxStacks || !Unlocked(card, clearedYear)) continue;
+                if (!UpgradeEffect.CanOffer(card, Stacks(card)) || !Unlocked(card, clearedYear)) continue;
                 if (lastOffer.Contains(card)) seenLastTime.Add(card);
                 else fresh.Add(card);
             }

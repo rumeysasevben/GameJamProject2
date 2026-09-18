@@ -25,12 +25,16 @@ namespace TenCandles.Core
         public HashSet<DecadeStage> VisitedStages = new();
         public List<string> Masteries = new();             // tower ids granted by Stay
         public int   WishesMade;
+        // Candles blown at wishes. Each one is off the candle cap for the rest of the run (§6).
+        public int   CandlesWished;
         public int   HardYearsTier;
         public int   Seed;
-        // The only source of run randomness (card draws, wave shuffles). Seeded from Seed by BirthdayController.NewRun.
+        // Card draws and wave shuffles. Seeded from Seed by BirthdayController.NewRun, like the streams below.
         [NonSerialized] public System.Random Rng;
         // Combat rolls (crits) get their own stream so shot counts never shift card offers or wave order.
         [NonSerialized] public System.Random CombatRng;
+        // Wish gift draws, likewise: runs that wish differently still see the same card offers and wave shuffles.
+        [NonSerialized] public System.Random WishRng;
 
         public DecadeSlot CurrentSlot => Slots[Math.Clamp(CurrentTier, 0, Slots.Length - 1)];
     }

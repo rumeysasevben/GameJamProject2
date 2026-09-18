@@ -4,7 +4,7 @@ using UnityEngine;
 namespace TenCandles
 {
     // The only owner of timeRemaining. Every gain, cost and penalty goes through here.
-    public class CandleClock : MonoBehaviour, Lifetime.IWishWallet
+    public class CandleClock : MonoBehaviour
     {
         public static CandleClock Instance { get; private set; }
 

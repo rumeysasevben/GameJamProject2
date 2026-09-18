@@ -214,7 +214,7 @@ namespace TenCandles
         void RefreshOptions(WishSystem wish)
         {
             var clock = CandleClock.Instance;
-            wallet.text = clock != null ? $"You have {clock.TimeRemaining:0} s  ·  {clock.LitCandles} of {clock.CandleCap} candles lit" : "";
+            wallet.text = clock != null ? $"{clock.CandleCap} candles on the cake  ·  {clock.LitCandles} lit  ·  candles you blow out never come back" : "";
 
             WishOption[] rules = wish.Options();
             for (int i = 0; i < options.Length && i < rules.Length; i++)
@@ -223,7 +223,7 @@ namespace TenCandles
                 WishOption o = rules[i];
                 v.option = o;
                 v.title.text = o.Candles == 0 ? "NO CANDLES" : $"{o.Candles} CANDLE{(o.Candles == 1 ? "" : "S")}";
-                v.cost.text = o.Candles == 0 ? "Free" : $"-{o.Cost:0} s";
+                v.cost.text = o.Candles == 0 ? "Free" : $"{o.CapAfter} candles";
                 v.cost.color = o.Candles == 0 ? skin.mutedText : skin.danger;
                 v.tier.text = o.Tier == WishGiftTier.None ? "No gift" : $"{o.Tier.ToString().ToUpperInvariant()} GIFT";
                 v.tier.color = o.Tier == WishGiftTier.None ? skin.mutedText : TierColor(o.Tier);
@@ -283,9 +283,9 @@ namespace TenCandles
                 if (o.option.Candles == candles) blowing = o;
             candlesPuffed = 0;
             title.text = "BLOW!";
-            subtitle.text = $"{candles} candle{(candles == 1 ? "" : "s")} out. {WishSystem.CostFor(candles):0} seconds of {Story.HeroPossessive} life, traded for a wish.";
+            subtitle.text = $"{candles} candle{(candles == 1 ? "" : "s")} out. Gone from the cake for the rest of {Story.HeroPossessive} life, traded for a wish.";
             var clock = CandleClock.Instance;
-            if (clock != null) wallet.text = $"You have {clock.TimeRemaining:0} s left  ·  {clock.LitCandles} of {clock.CandleCap} candles lit";
+            if (clock != null) wallet.text = $"{clock.CandleCap} candles on the cake now  ·  {clock.LitCandles} lit";
             foreach (var o in options)
                 if (o != blowing) o.button.gameObject.SetActive(false);
             SetStep(Step.Blowing);

@@ -64,8 +64,10 @@ namespace TenCandles.Core
         public const int MaxTowerLevel = 5;
 
         // ---------- Wish ----------
-        // candles blown -> tier. Cost = candles * SecondsPerCandle
+        // candles blown -> tier. Cost = the candles blown, taken off the candle cap for the rest of the run (§6).
         public static readonly int[] WishCandleOptions = { 0, 1, 3, 5 };
+        // A wish may never leave the candle cap below this, now or at any later tier.
+        public const int WishMinCandleCap = 3;
         // Gifts offered by a wish (§6), drawn from the blown tier's own Lifetime pool (5 gifts per tier).
         public const int WishGiftChoices = 3;
 
@@ -77,6 +79,9 @@ namespace TenCandles.Core
         public const int CardsOfferedPerYear = 3;
         public const int RareUnlockAge       = 12;
         public const int EpicUnlockAge       = 20;
+        // Floors of the cost and drain cards (Bulk Buy, Master Builder, Slow-Burning Wax). At its floor the effect is maxed (§11.3).
+        public const float MinCostMultiplier  = 0.2f;
+        public const float MinDrainMultiplier = 0.3f;
 
         // ---------- Adjacency ----------
         public const float AdjacencyRadius = 1.5f;      // world units, slot centre to slot centre

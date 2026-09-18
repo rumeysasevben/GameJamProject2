@@ -27,6 +27,8 @@ namespace TenCandles
         public static int FreeBuilds;
         // Added to the age-derived tower capacity (§7).
         public static int TowerCapacityBonus;
+        // Candles added on top of the tier cap by cards and passives (MaxCandlesAdd).
+        public static int BonusCandles;
 
         // Per tower kind, indexed by (int)TowerKind.
         public static readonly float[] KindDamage = new float[TowerKinds];
@@ -59,6 +61,7 @@ namespace TenCandles
             IgnoreArmor = false;
             FreeBuilds = 0;
             TowerCapacityBonus = 0;
+            BonusCandles = 0;
             for (int i = 0; i < TowerKinds; i++)
             {
                 KindDamage[i] = 1f;

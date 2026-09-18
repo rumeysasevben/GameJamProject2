@@ -140,6 +140,8 @@ namespace TenCandles.Core
 
         // Indexed by RunState.CurrentTier so Stay cannot dodge ageing.
 
+        // Running cap in a run \= max(WishMinCandleCap, TierCandleCap\[tier\] \+ bonus candles \- RunState.CandlesWished) (§6).
+
         public static readonly int\[\] TierCandleCap \= { 10, 10, 9, 7 };
 
         // Lanes the map may use per tier index 0..3. Active lanes \= min(map entrance count, TierLaneAllowance\[CurrentTier\]).
@@ -216,9 +218,11 @@ namespace TenCandles.Core
 
         // \---------- Wish \----------
 
-        // candles blown \-\> tier. Cost \= candles \* SecondsPerCandle
+        // candles blown \-\> tier. Cost \= the candles blown, taken off the candle cap for the rest of the run (§6)
 
         public static readonly int\[\] WishCandleOptions \= { 0, 1, 3, 5 };
+
+        public const int WishMinCandleCap \= 3;        // a wish may never leave the cap below this, now or at any later tier (§6)
 
         public const int WishGiftChoices \= 3;         // gifts offered by a wish, drawn from the blown tier's own pool of 5 (§6)
 
@@ -235,6 +239,10 @@ namespace TenCandles.Core
         public const int RareUnlockAge       \= 12;
 
         public const int EpicUnlockAge       \= 20;
+
+        public const float MinCostMultiplier  \= 0.2f;   // floor of Bulk Buy / Master Builder; at the floor the effect is maxed (§11.3)
+
+        public const float MinDrainMultiplier \= 0.3f;   // floor of Slow-Burning Wax
 
         // \---------- Adjacency \----------
 
@@ -401,11 +409,17 @@ public sealed class RunState
 
     public int   WishesMade;
 
+    public int   CandlesWished;                        // candles blown at wishes, off the candle cap for the rest of the run (§6)
+
     public int   HardYearsTier;
 
     public int   Seed;
 
-    \[NonSerialized\] public System.Random Rng;         // new System.Random(Seed); the only source of run randomness (§13.3)
+    \[NonSerialized\] public System.Random Rng;         // new System.Random(Seed); card draws and wave shuffles (§13.3)
+
+    \[NonSerialized\] public System.Random CombatRng;   // crit rolls (§13.3)
+
+    \[NonSerialized\] public System.Random WishRng;     // wish gift draws (§13.3)
 
 }
 
@@ -538,17 +552,24 @@ Planned, added by the phase that needs them, same convention:
 Shown at each birthday, **before** the Stay/Advance screen.
 
 | Candles blown | Cost | Gift tier | Choices offered |
-| ----: | ----: | :---- | ----: |
-| 0 | 0 s | none | — |
-| 1 | 30 s | Small | 3 |
-| 3 | 90 s | Large | 3 |
-| 5 | 150 s | Legendary | 3 |
+| ----: | :---- | :---- | ----: |
+| 0 | nothing | none | — |
+| 1 | candle cap −1 for the rest of the run | Small | 3 |
+| 3 | candle cap −3 for the rest of the run | Large | 3 |
+| 5 | candle cap −5 for the rest of the run | Legendary | 3 |
+
+**The Wish spends candle cap, not current time.** Blowing N candles permanently lowers the candle cap by N for the rest of the run. Current time is the resource the player has in surplus, so a wish priced in seconds is close to free (`balance/baseline_phase3.md`: most of a 150 s wish came out of time that would have overflowed anyway). The cap is the scarce thing.
+
+Running cap \= `max(WishMinCandleCap, TierCandleCap[tier] + bonus candles − RunState.CandlesWished)`, where bonus candles are every `MaxCandlesAdd` from cards and passives (`StatRegistry.BonusCandles`). Code: `LifetimeManager.RunningCandleCap`.
 
 Rules:
 
-- An option is selectable only if `CandleClock.CanAfford(cost)`, i.e. `TimeRemaining > cost`. You need **more** than the cost: a wish can never spend your last second and end the run. A wish that kills you is a trap, not a decision. This is the same check `TrySpend` makes (§3.2).  
+- **A wish can never end your run, or break the floor.** An option is selectable only if the cap stays at `Balance.WishMinCandleCap` (3) or more **at the current tier and every later tier** after the wish. Tier caps shrink with age (10, 10, 9, 7), so the check looks ahead: `min over tiers t ≥ current of (TierCandleCap[t] + bonus candles − CandlesWished − N) ≥ 3`. Otherwise the option is greyed out with a reason. The `max(3, …)` in the formula is only a safety net; wish legality keeps it from ever being needed.  
+  - Consequence: with no bonus candles the whole run can wish away at most `7 − 3 = 4` candles (for example 1 then 3), so a 5-candle wish needs at least one bonus candle first (The Eleventh Candle, Birthday Wish, Long Summer).  
+- Lowering the cap follows §3.2: `TimeRemaining` is clamped down to the new `MaxTime` at once. The wish never calls `TrySpend`.  
 - The gift is a `UpgradeCard` of rarity `Lifetime` (§11), which is **only** reachable through wishes. Each tier has its **own pool**; a wish offers `Balance.WishGiftChoices` (3) distinct gifts from the pool of the tier blown. Tiers are separate pools, not multipliers: a gift is applied at its own `value`.  
-- The spend goes through `CandleClock.TrySpend(cost, "wish")`.  
+- **A gift never duplicates an effect the player already has at max.** Gifts use the same exclusion rule as the yearly card draw (§11.3, `UpgradeEffect.CanOffer`): not at `maxStacks`, and the effect is not already maxed by another card. True Aim is not offered after Armor Breaker.  
+- Gifts are drawn with the wish stream `RunState.WishRng` (§13.3), never `RunState.Rng`.  
 - `GameEvents.WishResolved` fires in all cases, including 0 candles.
 
 **Invariant: no Wish gift may grant time or candle capacity.** The Wish trades lifespan for power; a gift that returns time inverts the trade. Forbidden effects: `MaxCandlesAdd`, `KillRewardAdd`, `KillRewardMul`, `WaveClearBonusAdd`, `ReviveOnce`, `DrainRateMul`, `LeakPenaltyAdd`, and any instant time grant (code: `ExtraCandle`, `KillBonus`, `KillRewardMul`, `WaveEndBonus`, `LastBreath`, `SlowBurn`, `LeakShield`, `InstantTime`). `WishSystem.GrantsTime(effect)` is the check: such a card is left out of the gift pool with a warning, and a test asserts the shipped gift data never uses one.
@@ -585,14 +606,17 @@ Where the Legendary tier departs from the design examples, because the effect do
 
 - *"Crits at ×3"* needs `CritMultiplierAdd`. The code's crit damage is a constant ×2.5 (`StatRegistry.CritDamageMultiplier`), so Lucky Stars raises crit **chance** to +0.50 instead.
 - *"A free max-level tower"* needs a level on `FreeTowerGrant`. The code's `FreeTower` grants a free level-1 build, so Housewarming grants 3.
-- *"Pierce on all towers."* §11.1's `PierceAdd` (projectiles pass through) is not implemented. True Aim uses the code's `ArmorPierce`: every tower's damage ignores armour. If the player already owns the Rare card Armor Breaker, True Aim does nothing.
+- *"Pierce on all towers."* §11.1's `PierceAdd` (projectiles pass through) is not implemented. True Aim uses the code's `ArmorPierce`: every tower's damage ignores armour. It is not offered once the player owns the Rare card Armor Breaker (same effect), and Armor Breaker is not offered once True Aim is taken.
 
-As implemented (Phase 3):
+As implemented (Phase 3, with the Phase 4 corrections):
 
-- **Flow.** `GameState.Wish` is entered after the year-10 card pick. Picking 1/3/5 candles spends them at once (`TrySpend(cost, "wish")`), raises `WishCandlesBlown(candles)` and offers up to `Balance.WishGiftChoices` gifts from that tier; picking a gift applies it through `UpgradeEffect` (so it lasts the run) and raises `WishResolved`. Picking 0 raises `WishResolved(0, null)` at once. Then `Birthday`.
-- **Pool.** Gifts live in the `LevelUpManager` pool with rarity `Lifetime` and a `giftTier`, and are filtered out of yearly offers. A taken gift is excluded at `maxStacks`. An option whose tier has no gifts left is disabled with a reason. With 5 per tier and 3 wishes per run, every offer is a full 3.
-- **Draw.** Gifts are drawn with `RunState.Rng` (§11.3). With 5 candidates for 3 slots every wish draws, so a run that wishes differently from another also sees different card offers and wave shuffles afterwards. When there are no more candidates than slots, all are offered in pool order without touching the RNG.
-- **`WishesMade`** counts wishes with at least one candle.
+- **Flow.** `GameState.Wish` is entered after the year-10 card pick. Picking 1/3/5 candles adds them to `RunState.CandlesWished`, recomputes the cap (`LifetimeManager.RefreshCandleCap` → `CandleClock.SetCandleCap`), raises `WishCandlesBlown(candles)` and offers up to `Balance.WishGiftChoices` gifts from that tier; picking a gift applies it through `UpgradeEffect` (so it lasts the run) and raises `WishResolved`. Picking 0 raises `WishResolved(0, null)` at once. Then `Birthday`. Each later tier change recomputes the cap with the same formula, so the lost candles stay lost.
+- **Pool.** Gifts live in the `LevelUpManager` pool with rarity `Lifetime` and a `giftTier`, and are filtered out of yearly offers. A gift is excluded by `UpgradeEffect.CanOffer` (at `maxStacks`, or its effect already maxed). An option whose tier has no gifts left is disabled with a reason. With 5 per tier and 3 wishes per run, every offer is a full 3 unless an effect is maxed.
+- **Draw.** Gifts are drawn with `RunState.WishRng`. Wishing never advances `RunState.Rng`, so runs with the same seed that wish differently still draw from the same card and wave stream. (Their card *candidates* can still differ once play differs: different towers owned, different effects maxed.) When there are no more candidates than slots, all are offered in pool order without touching the RNG.
+- **`WishesMade`** counts wishes with at least one candle; **`CandlesWished`** sums the candles.
+- **UI.** Each option shows the cap it leaves ("8 candles"), and a greyed option says how low the cap would fall later in life.
+
+> **History.** Until the Phase 4 corrections a wish cost `candles × SecondsPerCandle` of current time through `TrySpend(cost, "wish")`, legal when `TimeRemaining > cost`. The Phase 3 baseline showed a 5-candle wish tying a 1-candle wish in all five lives, because the spent seconds mostly came out of overflow.
 
 Design intent: this is the signature moment of the game. Blowing out candles must be spectacular — VFX, audio, a hard beat — because the player is trading lifespan for power.
 
@@ -980,7 +1004,7 @@ Lifetime cards (the wish gifts) are listed in §6.1, five per tier. `second_wind
 ### 11.3 Draw rules
 
 - Offer `Balance.CardsOfferedPerYear` (3) distinct cards **every 2 years**: after the waves of ages 1, 3, 5 … 39, i.e. **20 offers per run**. Not every wave: 40 picks against a pool of ~25 cards averaging 2 stacks would leave the last third of the run with no real choice.  
-- Exclude cards already at `maxStacks`.  
+- Exclude cards already at `maxStacks`, and cards whose effect is already maxed by another card: a switch that is already on (`ArmorPierce`, `Chain`, an armed `LastBreath`), a `HitSlow` no stronger than the one owned, or a cost/drain multiplier already at its floor (`Balance.MinCostMultiplier`, `Balance.MinDrainMultiplier`). Code: `UpgradeEffect.CanOffer`, shared with wish gifts (§6).  
 - Exclude cards whose `targetTowerId` the player does not own.  
 - Filter by rarity gate on `RunState.CurrentAge` (§7).  
 - `Lifetime` cards are never offered here — wishes only.  
@@ -1032,7 +1056,15 @@ Unlocked after the first `Full Life` victory. 15 tiers, cumulative, one modifier
 ### 13.3 Legend mode, seeds and leaderboard
 
 - Unlocked after first reaching age 40\. The run continues past 40; `d` keeps incrementing with `StageHpMultiplier` extrapolated as `17.50 * 2.57^(d-3)`. Score \= age reached.  
-- **All run randomness comes from `RunState.Seed`: the seeded `System.Random` `RunState.Rng`, plus `RunState.CombatRng` for combat rolls.** Never call `UnityEngine.Random` in gameplay code. Card draws and wave shuffles use it since Phase 2. Combat rolls (crits) use a second stream, `RunState.CombatRng`, seeded from the same `Seed`, so the number of shots fired never shifts card offers or wave order. Daily seed \= `yyyyMMdd` hashed.  
+- **All run randomness comes from `RunState.Seed`, through three seeded `System.Random` streams.** Never call `UnityEngine.Random` in gameplay code. Each stream is seeded from the same `Seed` (`BirthdayController.NewRun`), so a decision in one system never shifts the rolls of another:
+
+  | Stream | Seed | Used by | Since |
+  | :---- | :---- | :---- | :---- |
+  | `RunState.Rng` | `Seed` | card draws, wave shuffles | Phase 2 |
+  | `RunState.CombatRng` | `Seed × 31 + 7` | combat rolls (crits): the number of shots fired never shifts card offers or wave order | Phase 2 |
+  | `RunState.WishRng` | `Seed × 31 + 13` | wish gift draws: how much a player wishes never shifts card offers or wave order | Phase 4 corrections |
+
+  Daily seed \= `yyyyMMdd` hashed.  
 - Leaderboard submission sends `{ seed, score, choices[], wishes[], purchases[], checksum }`, not just the score. Server-side validation replays the choice log for plausibility. Client-side scores are forgeable; this only raises the bar.
 
 ---
@@ -1145,7 +1177,7 @@ Extend the run to 40 waves across 4 tiers. `RunState`, `DecadeSlot`, `LifetimeMa
 
 `WishSystem`, `Lifetime` rarity pool, the blow-out moment with full VFX and audio.
 
-**Acceptance:** all four candle options work; insufficient time disables the option; `WishResolved` fires in every case including 0; a wish gift persists to the end of the run.
+**Acceptance:** all four candle options work; an option that would leave the candle cap below `WishMinCandleCap` at any remaining tier is disabled with a reason (was: insufficient time, before the Phase 4 corrections); `WishResolved` fires in every case including 0; a wish gift persists to the end of the run.
 
 ### Phase 4 — Content pass 1
 
@@ -1235,7 +1267,7 @@ Flag these to Rumeysa rather than deciding alone:
 3. Should `OldAge` be reachable through a Legacy unlock on non-`A A A` paths? (Spec says no — its rarity is the point.)  
 4. Controller support: Phase 5 or after Phase 9?  
 5. ~~**Wish gift tiers** (§6)~~ **Resolved:** tiers are separate pools of 5 gifts each, not value multipliers, and no gift may grant time or candle capacity. See §6 and §6.1.  
-6. ~~**Wish affordability at exact equality**~~ **Resolved:** strict. You need more than the cost, so a wish can never spend your last second. §6 and §3.2 now say so.  
+6. ~~**Wish affordability at exact equality**~~ **Resolved:** strict. You need more than the cost, so a wish can never spend your last second. §6 and §3.2 now say so. *Superseded by the Phase 4 corrections:* a wish no longer spends time; it lowers the candle cap, which may never fall below `WishMinCandleCap` (§6).  
 7. **Legendary gift effects that don't exist in code** (§6.1): `CritMultiplierAdd` (crit ×3), a level on `FreeTowerGrant` (a free max-level tower) and `PierceAdd` (projectiles pass through) are in §11.1 but not implemented. Lucky Stars, Housewarming and True Aim use the nearest existing effects. Should those three effects be built, and in which phase?
 
    and when unity is close , you can make test

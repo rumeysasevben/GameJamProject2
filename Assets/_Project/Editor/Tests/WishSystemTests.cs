@@ -9,30 +9,13 @@ using UnityEngine.TestTools;
 
 namespace TenCandles.EditorTools.Tests
 {
-    // Spec §6 (Phase 3). Window > General > Test Runner > EditMode.
+    // Spec §6 (Phase 3, with the candle-cap cost). Window > General > Test Runner > EditMode.
     public class WishSystemTests
     {
-        // CandleClock's spending rules without a scene: TrySpend refuses a spend that would put out the last candle.
-        sealed class FakeWallet : IWishWallet
-        {
-            public float TimeRemaining { get; set; }
-            public readonly List<(float seconds, string reason)> Spends = new List<(float, string)>();
-
-            public FakeWallet(float time) => TimeRemaining = time;
-            public bool CanAfford(float seconds) => TimeRemaining > seconds;
-
-            public bool TrySpend(float seconds, string reason)
-            {
-                if (!CanAfford(seconds)) return false;
-                TimeRemaining -= seconds;
-                Spends.Add((seconds, reason));
-                return true;
-            }
-        }
-
         readonly List<ScriptableObject> created = new List<ScriptableObject>();
         readonly List<(int candles, WishGift gift)> resolved = new List<(int, WishGift)>();
         readonly List<int> blown = new List<int>();
+        int capChanges;
 
         UpgradeCard Card(string title, CardRarity rarity, CardEffect effect, float value, WishGiftTier tier = WishGiftTier.None)
         {
@@ -67,6 +50,16 @@ namespace TenCandles.EditorTools.Tests
             Gift("Housewarming", WishGiftTier.Legendary, CardEffect.FreeTower, 3f),
         };
 
+        WishSystem Wish(RunState run, IEnumerable<UpgradeCard> pool = null) => new WishSystem(run, pool ?? Pool(), () => capChanges++);
+
+        static RunState RunAtAge(int age, int candlesWished = 0)
+        {
+            RunState run = BirthdayController.NewRun(0);
+            run.CurrentAge = age;
+            run.CandlesWished = candlesWished;
+            return run;
+        }
+
         void OnResolved(int candles, WishGift gift) => resolved.Add((candles, gift));
         void OnBlown(int candles) => blown.Add(candles);
 
@@ -74,6 +67,7 @@ namespace TenCandles.EditorTools.Tests
         public void SetUp()
         {
             StatRegistry.Reset();
+            capChanges = 0;
             GameEvents.WishResolved += OnResolved;
             GameEvents.WishCandlesBlown += OnBlown;
         }
@@ -90,41 +84,45 @@ namespace TenCandles.EditorTools.Tests
             blown.Clear();
         }
 
+        // At age 10 with one bonus candle every option is legal. Each takes its candles off the cap: 11 -> 10 / 8 / 6.
         [Test]
         public void FourCandleOptionsMatchSpecTable()
         {
-            var wish = new WishSystem(BirthdayController.NewRun(0), Pool(), new FakeWallet(300f));
-            WishOption[] options = wish.Options();
+            StatRegistry.BonusCandles = 1;
+            WishOption[] options = Wish(RunAtAge(10)).Options();
 
             CollectionAssert.AreEqual(new[] { 0, 1, 3, 5 }, options.Select(o => o.Candles));
-            CollectionAssert.AreEqual(new[] { 0f, 30f, 90f, 150f }, options.Select(o => o.Cost));
             CollectionAssert.AreEqual(new[] { WishGiftTier.None, WishGiftTier.Small, WishGiftTier.Large, WishGiftTier.Legendary }, options.Select(o => o.Tier));
+            CollectionAssert.AreEqual(new[] { 11, 10, 8, 6 }, options.Select(o => o.CapAfter));
+            CollectionAssert.AreEqual(new[] { 8, 7, 5, 3 }, options.Select(o => o.LowestCapAfter), "Old Age's 7 + 1 bonus, less the candles");
             Assert.IsTrue(options.All(o => o.Legal && o.BlockedReason.Length == 0));
         }
 
-        // Acceptance: all four candle options work. Each spends its cost through TrySpend("wish") and grants a gift
-        // from its own tier's pool, at the card's own value.
+        // Acceptance: all four candle options work. Each lowers the cap for good (never spends current time) and grants
+        // a gift from its own tier's pool, at the card's own value.
         [TestCase(0)]
         [TestCase(1)]
         [TestCase(3)]
         [TestCase(5)]
         public void EveryCandleOptionWorks(int candles)
         {
-            RunState run = BirthdayController.NewRun(0);
-            var wallet = new FakeWallet(300f);
-            var wish = new WishSystem(run, Pool(), wallet);
+            StatRegistry.BonusCandles = 1;
+            RunState run = RunAtAge(10);
+            var wish = Wish(run);
 
             Assert.IsTrue(wish.Blow(candles));
+            Assert.AreEqual(candles, run.CandlesWished);
             if (candles == 0)
             {
-                Assert.IsEmpty(wallet.Spends, "blowing nothing is free");
+                Assert.AreEqual(0, capChanges, "blowing nothing leaves the cap alone");
                 Assert.IsNull(wish.CurrentOffer);
                 Assert.AreEqual(0, run.WishesMade);
                 return;
             }
 
             WishGiftTier tier = WishSystem.TierFor(candles);
-            CollectionAssert.AreEqual(new[] { (candles * Balance.SecondsPerCandle, "wish") }, wallet.Spends);
+            Assert.AreEqual(1, capChanges);
+            Assert.AreEqual(11 - candles, LifetimeManager.RunningCandleCap(run.CurrentTier, StatRegistry.BonusCandles, run.CandlesWished));
             CollectionAssert.AreEqual(new[] { candles }, blown);
             Assert.AreEqual(Balance.WishGiftChoices, wish.CurrentOffer.Length);
             Assert.IsTrue(wish.CurrentOffer.All(c => c.rarity == CardRarity.Lifetime && c.giftTier == tier), "gifts come from the blown tier's pool only");
@@ -138,38 +136,92 @@ namespace TenCandles.EditorTools.Tests
             Assert.IsNull(wish.CurrentOffer);
         }
 
-        // Acceptance: insufficient time disables the option, with a reason, and blowing it changes nothing.
+        // §6: a wish may never leave the cap below WishMinCandleCap (3), at this tier or any later one. Tier caps shrink
+        // with age, so the check looks ahead to Old Age's 7. An illegal option is disabled with a reason and changes nothing.
         [Test]
-        public void InsufficientTimeDisablesTheOption()
+        public void AWishCanNeverBreakTheCandleFloor()
         {
-            var wallet = new FakeWallet(100f);
-            var wish = new WishSystem(BirthdayController.NewRun(0), Pool(), wallet);
+            RunState run = RunAtAge(10);
+            var wish = Wish(run);
             WishOption[] options = wish.Options();
 
-            CollectionAssert.AreEqual(new[] { true, true, true, false }, options.Select(o => o.Legal));
-            StringAssert.Contains("150", options[3].BlockedReason);
+            CollectionAssert.AreEqual(new[] { true, true, true, false }, options.Select(o => o.Legal), "7 - 5 = 2 in Old Age");
+            Assert.AreEqual(5, options[3].CapAfter, "the cap right after would still be 5; the later tiers decide");
+            StringAssert.Contains("at least 3", options[3].BlockedReason);
             Assert.IsFalse(wish.Blow(5));
-            Assert.AreEqual(100f, wallet.TimeRemaining);
+            Assert.AreEqual(0, run.CandlesWished);
+            Assert.AreEqual(0, capChanges);
             Assert.IsNull(wish.CurrentOffer);
             Assert.IsEmpty(resolved);
             Assert.IsEmpty(blown);
 
-            // §6: you need more than the cost. Spending the last second would end the run, and TrySpend refuses it (§3.2).
-            Assert.IsFalse(new WishSystem(null, Pool(), new FakeWallet(90f)).IsLegal(3));
-            Assert.IsTrue(new WishSystem(null, Pool(), new FakeWallet(90.01f)).IsLegal(3));
-            // Nothing is ever needed to wish for nothing.
-            Assert.IsTrue(new WishSystem(null, Pool(), new FakeWallet(0.5f)).IsLegal(0));
+            // Earlier wishes count: 3 already gone leaves room for exactly one more candle.
+            CollectionAssert.AreEqual(new[] { true, true, false, false }, Wish(RunAtAge(20, 3)).Options().Select(o => o.Legal));
+            CollectionAssert.AreEqual(new[] { true, false, false, false }, Wish(RunAtAge(30, 4)).Options().Select(o => o.Legal));
+            // Bonus candles (cards, Long Summer) make room.
+            StatRegistry.BonusCandles = 3;
+            CollectionAssert.AreEqual(new[] { true, true, true, false }, Wish(RunAtAge(30, 4)).Options().Select(o => o.Legal), "7 + 3 - 4 = 6: room for 3, not 5");
+            // Wishing for nothing is always possible.
+            StatRegistry.BonusCandles = 0;
+            Assert.IsTrue(Wish(RunAtAge(30, 4)).IsLegal(0));
+            // The formula's own floor, for a cap that falls for any other reason.
+            Assert.AreEqual(Balance.WishMinCandleCap, LifetimeManager.RunningCandleCap(3, 0, 6));
+        }
+
+        // The cost lands on the real clock: the cap drops by N for the rest of the run, time above the new cap is clamped
+        // off (§3.2), and each later tier's cap is N lower too. A later MaxCandlesAdd still adds on top.
+        [Test]
+        public void BlownCandlesComeOffTheCapForTheRestOfTheRun()
+        {
+            var clockGo = new GameObject("Clock");
+            var lifetimeGo = new GameObject("Lifetime");
+            try
+            {
+                var clock = clockGo.AddComponent<CandleClock>();
+                typeof(CandleClock).GetMethod("Awake", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(clock, null);
+                var lifetime = lifetimeGo.AddComponent<LifetimeManager>();
+                lifetime.BeginRun(0);
+                for (int age = 1; age < 10; age++) lifetime.AdvanceAge();
+                var wish = new WishSystem(lifetime.Run, Pool(), lifetime.RefreshCandleCap);
+
+                Assert.AreEqual(10, clock.CandleCap);
+                Assert.AreEqual(300f, clock.TimeRemaining);
+                Assert.IsTrue(wish.Blow(3));
+                Assert.AreEqual(7, clock.CandleCap);
+                Assert.AreEqual(210f, clock.TimeRemaining, 1e-4f, "time above the new cap is clamped off");
+                wish.Choose(0);
+
+                var caps = new List<int> { clock.CandleCap };
+                for (int birthday = 0; birthday < 3; birthday++)
+                {
+                    Assert.IsTrue(lifetime.ResolveBirthday(BirthdayChoice.Advance, null));
+                    for (int i = 0; i < Balance.YearsPerDecade; i++) lifetime.AdvanceAge();
+                    caps.Add(clock.CandleCap);
+                }
+                CollectionAssert.AreEqual(new[] { 7, 7, 6, 4 }, caps, "tier caps 10 / 10 / 9 / 7, each 3 lower");
+
+                UpgradeEffect.Apply(CardEffect.ExtraCandle, 1f);
+                Assert.AreEqual(5, clock.CandleCap, "a bonus candle still adds on top");
+            }
+            finally
+            {
+                typeof(CandleClock).GetProperty("Instance").SetValue(null, null);
+                typeof(LifetimeManager).GetProperty("Instance").SetValue(null, null);
+                Object.DestroyImmediate(clockGo);
+                Object.DestroyImmediate(lifetimeGo);
+            }
         }
 
         // Acceptance: WishResolved fires in every case, including 0 candles, exactly once per wish.
         [Test]
         public void WishResolvedFiresInEveryCaseIncludingZero()
         {
+            StatRegistry.BonusCandles = 1;
             foreach (int candles in Balance.WishCandleOptions)
             {
                 resolved.Clear();
-                var wish = new WishSystem(BirthdayController.NewRun(0), Pool(), new FakeWallet(300f));
-                wish.Blow(candles);
+                var wish = Wish(RunAtAge(10));
+                Assert.IsTrue(wish.Blow(candles), candles + " candles");
                 if (candles > 0)
                 {
                     Assert.IsEmpty(resolved, "not before the gift is picked");
@@ -184,7 +236,7 @@ namespace TenCandles.EditorTools.Tests
 
         // Acceptance: a wish gift persists to the end of the run. Walk a whole A A S life through the real birthday
         // code: Legacy Flame (Large) at 10, Lucky Stars (Legendary) at 20, Warm Glow (Small) at 30. Three gifts per
-        // tier, so every offer is the whole tier.
+        // tier, so every offer is the whole tier. Nine candles in all need six bonus candles to stay above the floor.
         [Test]
         public void WishGiftPersistsToTheEndOfTheRun()
         {
@@ -193,9 +245,9 @@ namespace TenCandles.EditorTools.Tests
             {
                 var lifetime = go.AddComponent<LifetimeManager>();
                 lifetime.BeginRun(0);
-                var wallet = new FakeWallet(300f);
+                StatRegistry.BonusCandles = 6;
                 var three = new[] { "Lucky Candle", "Golden Luck", "Housewarming" };
-                var wish = new WishSystem(lifetime.Run, Pool().Where(c => !three.Contains(c.title)), wallet);
+                var wish = Wish(lifetime.Run, Pool().Where(c => !three.Contains(c.title)));
 
                 var wishes = new Queue<(int candles, string gift)>(new[] { (3, "Legacy Flame"), (5, "Lucky Stars"), (1, "Warm Glow") });
                 var choices = new Queue<BirthdayChoice>(new[] { BirthdayChoice.Advance, BirthdayChoice.Advance, BirthdayChoice.Stay });
@@ -203,7 +255,6 @@ namespace TenCandles.EditorTools.Tests
                 {
                     if (!LifetimeManager.IsBirthdayAge(lifetime.Age)) continue;
                     var (candles, wanted) = wishes.Dequeue();
-                    wallet.TimeRemaining = 300f;
                     Assert.IsTrue(wish.Blow(candles), "age " + lifetime.Age);
                     Assert.AreEqual(wanted, wish.Choose(System.Array.FindIndex(wish.CurrentOffer, c => c.title == wanted))?.Card.title);
                     Assert.IsTrue(lifetime.ResolveBirthday(choices.Dequeue(), null), "age " + lifetime.Age);
@@ -214,6 +265,7 @@ namespace TenCandles.EditorTools.Tests
                 Assert.AreEqual(0.5f, StatRegistry.CritChance, 1e-4f, "Lucky Stars from 20");
                 Assert.AreEqual(1, StatRegistry.TowerCapacityBonus, "Established from the Stay at 30");
                 Assert.AreEqual(3, lifetime.Run.WishesMade);
+                Assert.AreEqual(9, lifetime.Run.CandlesWished);
             }
             finally
             {
@@ -226,8 +278,8 @@ namespace TenCandles.EditorTools.Tests
         [Test]
         public void TiersAreSeparatePoolsThatEmptyOnTheirOwn()
         {
-            var wallet = new FakeWallet(10000f);
-            var wish = new WishSystem(BirthdayController.NewRun(3), Pool(), wallet);
+            StatRegistry.BonusCandles = 100;
+            var wish = Wish(RunAtAge(10));
             var taken = new List<UpgradeCard>();
             for (int i = 0; i < 4; i++)
             {
@@ -242,6 +294,55 @@ namespace TenCandles.EditorTools.Tests
             CollectionAssert.AreEqual(new[] { true, false, true, true }, options.Select(o => o.Legal));
             StringAssert.Contains("no small gifts left", options[1].BlockedReason);
             Assert.AreEqual(4, wish.Available(WishGiftTier.Large).Count);
+        }
+
+        // Correction 2: a gift never duplicates an effect the player already has at max. True Aim (ignore armour) is
+        // not offered after the Armor Breaker card, and the yearly draw applies the same rule the other way round.
+        [Test]
+        public void AGiftNeverDuplicatesAMaxedEffect()
+        {
+            StatRegistry.BonusCandles = 1;
+            var wish = Wish(RunAtAge(10));
+            Assert.IsTrue(wish.Available(WishGiftTier.Legendary).Any(c => c.title == "True Aim"), "offered while armour still counts");
+
+            UpgradeCard armorBreaker = Card("Armor Breaker", CardRarity.Rare, CardEffect.ArmorPierce, 1f);
+            UpgradeEffect.Apply(armorBreaker);
+            CollectionAssert.AreEquivalent(new[] { "Crowded Table", "Lucky Stars", "Housewarming" }, wish.Available(WishGiftTier.Legendary).Select(c => c.title));
+            Assert.IsTrue(wish.Blow(5));
+            Assert.IsFalse(wish.CurrentOffer.Any(c => c.title == "True Aim"));
+
+            // The shared rule, for every switch-like or floored effect.
+            Assert.IsFalse(UpgradeEffect.CanOffer(armorBreaker, 0), "same effect, already on");
+            StatRegistry.HitSlowPercent = 0.3f;
+            Assert.IsTrue(UpgradeEffect.IsMaxed(CardEffect.HitSlow, 0.2f));
+            Assert.IsFalse(UpgradeEffect.IsMaxed(CardEffect.HitSlow, 0.4f), "a stronger slow still changes something");
+            StatRegistry.BuildCostMultiplier = Balance.MinCostMultiplier;
+            Assert.IsTrue(UpgradeEffect.IsMaxed(CardEffect.BuildCost, 0.2f));
+            Assert.IsFalse(UpgradeEffect.IsMaxed(CardEffect.Damage, 0.2f), "stacking multipliers are never maxed");
+
+            // Yearly draw: once True Aim is taken, Armor Breaker never shows up in an offer.
+            var go = new GameObject("LevelUp");
+            try
+            {
+                StatRegistry.Reset();
+                var levelUp = go.AddComponent<LevelUpManager>();
+                UpgradeCard[] pool = { armorBreaker, Card("Quick Hands", CardRarity.Common, CardEffect.FireRate, 0.12f),
+                    Card("Long Fuse", CardRarity.Common, CardEffect.Range, 0.15f), Card("Bonfire", CardRarity.Common, CardEffect.Damage, 0.15f) };
+                typeof(LevelUpManager).GetField("pool", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(levelUp, pool);
+                bool seenBefore = false;
+                for (int year = 5; year < 20; year += 2)
+                    seenBefore |= levelUp.Offer(year) && levelUp.CurrentOffer.Contains(armorBreaker);
+                Assert.IsTrue(seenBefore, "Armor Breaker is offered before True Aim");
+
+                UpgradeEffect.Apply(Pool().First(c => c.title == "True Aim"));
+                for (int year = 21; year < Balance.TotalYears; year += 2)
+                    if (levelUp.Offer(year))
+                        CollectionAssert.DoesNotContain(levelUp.CurrentOffer, armorBreaker, "year " + year);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
         }
 
         // §6 invariant: no wish gift may grant time or candle capacity. A Lifetime card that would is left out of
@@ -259,7 +360,7 @@ namespace TenCandles.EditorTools.Tests
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("Endless Party"));
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("No Tier"));
 
-            var wish = new WishSystem(BirthdayController.NewRun(0), pool, new FakeWallet(300f));
+            var wish = Wish(RunAtAge(10), pool);
             CollectionAssert.AreEquivalent(new[] { "Legacy Flame", "Open House", "Restless Hands", "Golden Luck" }, wish.Available(WishGiftTier.Large).Select(c => c.title));
 
             foreach (CardEffect e in new[] { CardEffect.ExtraCandle, CardEffect.InstantTime, CardEffect.KillBonus, CardEffect.KillRewardMul,
@@ -298,6 +399,7 @@ namespace TenCandles.EditorTools.Tests
 
                 UpgradeEffect.Apply(CardEffect.ExtraCandle, 2f);
 
+                Assert.AreEqual(2, StatRegistry.BonusCandles);
                 Assert.AreEqual(Balance.BaseCandleCount + 2, clock.CandleCap);
                 Assert.AreEqual((Balance.BaseCandleCount + 2) * Balance.SecondsPerCandle, clock.MaxTime);
                 Assert.AreEqual(before, clock.TimeRemaining, "raising the cap adds no time");
@@ -335,23 +437,27 @@ namespace TenCandles.EditorTools.Tests
             }
         }
 
-        // Gift draws use the run's seeded RNG: same seed, same gifts. With no more candidates than slots the RNG is
-        // not touched.
+        // Correction 3: gift draws use their own seeded stream, RunState.WishRng. Same seed, same gifts; and a wish
+        // never advances RunState.Rng, so card offers and wave shuffles are the same whatever the player wishes for.
         [Test]
-        public void GiftDrawIsSeeded()
+        public void GiftDrawIsSeededOnItsOwnStream()
         {
+            StatRegistry.BonusCandles = 1;
             RunState c = BirthdayController.NewRun(7), d = BirthdayController.NewRun(7);
-            var wc = new WishSystem(c, Pool(), new FakeWallet(300f));
-            var wd = new WishSystem(d, Pool(), new FakeWallet(300f));
+            c.CurrentAge = d.CurrentAge = 10;
+            var wc = Wish(c);
+            var wd = Wish(d);
             wc.Blow(3);
             wd.Blow(3);
             Assert.AreEqual(Balance.WishGiftChoices, wc.CurrentOffer.Length);
             CollectionAssert.AreEqual(wc.CurrentOffer.Select(x => x.title), wd.CurrentOffer.Select(x => x.title), "same seed, same gifts");
 
             RunState a = BirthdayController.NewRun(12345), b = BirthdayController.NewRun(12345);
-            UpgradeCard[] three = Pool().Where(x => x.giftTier != WishGiftTier.Small || x.title != "Warm Glow").ToArray();
-            new WishSystem(a, three, new FakeWallet(300f)).Blow(1);
-            Assert.AreEqual(b.Rng.Next(), a.Rng.Next(), "3 Small gifts for 3 slots: RNG untouched");
+            a.CurrentAge = b.CurrentAge = 10;
+            Assert.IsTrue(Wish(a).Blow(5), "4 Legendary gifts for 3 slots: a real draw");
+            Assert.AreEqual(b.Rng.Next(), a.Rng.Next(), "the card and wave stream is untouched");
+            Assert.AreEqual(b.CombatRng.Next(), a.CombatRng.Next(), "so is the combat stream");
+            Assert.AreNotEqual(b.WishRng.Next(), a.WishRng.Next(), "the draw used the wish stream");
         }
     }
 }

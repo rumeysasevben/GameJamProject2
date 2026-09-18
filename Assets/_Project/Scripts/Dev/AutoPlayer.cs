@@ -27,7 +27,7 @@ namespace TenCandles
         const float WishCandlesShotSeconds = 0.6f;
         const float WishGiftsShotSeconds = 2.2f;
         float holdSince = -1f;
-        // -bot.wish=max (default): the most candles that still leave reserveSeconds. -bot.wish=0|1|3|5: that many when legal.
+        // -bot.wish=max (default): the most candles that are legal. -bot.wish=0|1|3|5: the most legal candles up to that many.
         public string wish = "max";
         const int StageShotFrames = 30;
         int stageShotIn;
@@ -37,16 +37,31 @@ namespace TenCandles
         int leaksThisYear, leaksTotal;
         float thinkTimer;
 
+        // Capacity first: only wish gifts carry it (Open House, Crowded Table), and taking it is the only way the
+        // capacity tail of the build plan gets measured.
         static readonly CardEffect[] CardPriority =
         {
-            CardEffect.Blessing, CardEffect.ExtraCandle, CardEffect.SlowBurn, CardEffect.Damage, CardEffect.FireRate,
+            CardEffect.TowerCapacityAdd, CardEffect.Blessing, CardEffect.ExtraCandle, CardEffect.SlowBurn, CardEffect.Damage, CardEffect.FireRate,
             CardEffect.KindDamage, CardEffect.KindFireRate, CardEffect.SplashRadius, CardEffect.Crit, CardEffect.ArmorPierce, CardEffect.HitSlow,
             CardEffect.WaveEndBonus, CardEffect.LeakShield, CardEffect.FreeTower, CardEffect.Range, CardEffect.KillBonus,
             CardEffect.LastBreath, CardEffect.UpgradeCost, CardEffect.InstantTime, CardEffect.Chain, CardEffect.BuildCost, CardEffect.BurnBoost, CardEffect.Beeswax
         };
 
+        // Past the base plan's 9 towers: a Firework, then a Cake, per extra slot, each taken to max level. Build steps
+        // are skipped at tower capacity, so the tail only runs when capacity cards, gifts or passives add slots.
+        static IEnumerable<(TowerKind, int, int)> CapacityTail()
+        {
+            for (int n = 3; n < 3 + ExtraTowersPlanned / 2; n++)
+                foreach (TowerKind kind in new[] { TowerKind.Firework, TowerKind.Cake })
+                    for (int level = 1; level <= TowerData.MaxLevel; level++)
+                        yield return (kind, n, level);
+        }
+
+        // Towers beyond the base plan. More than every capacity card, gift and passive together can add.
+        const int ExtraTowersPlanned = 12;
+
         // Rough plan in the spirit of the GDD target build: (kind, nth tower of that kind, level).
-        static readonly (TowerKind kind, int index, int level)[] Plan =
+        static readonly (TowerKind kind, int index, int level)[] BasePlan =
         {
             (TowerKind.Confetti, 0, 1), (TowerKind.Confetti, 1, 1), (TowerKind.Cake, 0, 1), (TowerKind.Confetti, 0, 2),
             (TowerKind.Cake, 1, 1), (TowerKind.Confetti, 1, 2), (TowerKind.Firework, 0, 1), (TowerKind.Cake, 0, 2),
@@ -55,6 +70,9 @@ namespace TenCandles
             (TowerKind.Firework, 1, 3), (TowerKind.Cake, 0, 3), (TowerKind.Cake, 1, 3), (TowerKind.Firework, 2, 1),
             (TowerKind.Firework, 2, 2), (TowerKind.Firework, 2, 3), (TowerKind.Cake, 2, 3), (TowerKind.Confetti, 0, 3),
         };
+
+        // Declared after BasePlan: static fields initialise in order.
+        static readonly (TowerKind kind, int index, int level)[] Plan = BasePlan.Concat(CapacityTail()).ToArray();
 
         readonly List<Tower> built = new List<Tower>();
 
@@ -253,17 +271,16 @@ namespace TenCandles
                 if (HoldForShot(WishCandlesShotSeconds, $"wish_{gm.Age}_candles")) return;
 
                 WishOption[] options = system.Options();
+                int limit = wish == "max" ? int.MaxValue : int.TryParse(wish, out int n) ? n : 0;
                 int candles = 0;
                 foreach (var o in options)
-                {
-                    bool wanted = wish == "max" ? clock.TimeRemaining - o.Cost >= reserveSeconds : o.Candles.ToString() == wish;
-                    if (o.Legal && wanted && o.Candles >= candles) candles = o.Candles;
-                }
-                report.AppendLine($"    wish at {gm.Age}: time {clock.TimeRemaining:0.0}s, options {string.Join(", ", options.Select(o => $"{o.Candles} {(o.Legal ? "legal" : "illegal (" + o.BlockedReason + ")")}"))}");
+                    if (o.Legal && o.Candles <= limit && o.Candles >= candles) candles = o.Candles;
+                report.AppendLine($"    wish at {gm.Age}: time {clock.TimeRemaining:0.0}s, cap {clock.CandleCap}, options {string.Join(", ", options.Select(o => $"{o.Candles} {(o.Legal ? $"legal (cap {o.CapAfter}, lowest {o.LowestCapAfter})" : "illegal (" + o.BlockedReason + ")")}"))}");
                 float before = clock.TimeRemaining;
+                int capBefore = clock.CandleCap;
                 gm.BlowWishCandles(candles);
                 if (candles == 0) report.AppendLine("    wished for nothing: 0 candles");
-                else report.AppendLine($"    blew {candles} ({WishSystem.TierFor(candles)}): {before:0.0}s -> {clock.TimeRemaining:0.0}s, gifts [{string.Join(", ", system.CurrentOffer.Select(c => c.title))}]");
+                else report.AppendLine($"    blew {candles} ({WishSystem.TierFor(candles)}){(candles < limit && limit != int.MaxValue ? $", the most legal up to {limit}" : "")}: cap {capBefore} -> {clock.CandleCap}, time {before:0.0}s -> {clock.TimeRemaining:0.0}s, candles wished {gm.Lifetime.Run.CandlesWished}, gifts [{string.Join(", ", system.CurrentOffer.Select(c => c.title))}]");
                 return;
             }
 
